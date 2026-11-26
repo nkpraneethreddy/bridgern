@@ -1,0 +1,199 @@
+import React, { useState } from 'react';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
+import { Link } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { DisclaimerBanner } from '../../src/components/DisclaimerBanner';
+import { Button } from '../../src/components/ui/Button';
+import { Card } from '../../src/components/ui/Card';
+import { Input } from '../../src/components/ui/Input';
+import { ThemedText } from '../../src/components/ui/ThemedText';
+import { signInWithGoogle, signUpWithEmail } from '../../src/services/auth';
+import { useTheme } from '../../src/theme/ThemeProvider';
+import { spacing } from '../../src/theme/typography';
+
+export default function SignUpScreen() {
+  const { colors } = useTheme();
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState<'email' | 'google' | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [confirmationNotice, setConfirmationNotice] = useState<string | null>(null);
+
+  async function handleSignUp() {
+    setErrorMessage(null);
+    setConfirmationNotice(null);
+
+    if (!fullName.trim()) {
+      setErrorMessage('Enter your full name.');
+      return;
+    }
+    if (!email.trim()) {
+      setErrorMessage('Enter a valid email address.');
+      return;
+    }
+    if (password.length < 8) {
+      setErrorMessage('Use a password with at least 8 characters.');
+      return;
+    }
+
+    setLoading('email');
+    try {
+      const result = await signUpWithEmail(email, password, fullName);
+      if (!result.session) {
+        setConfirmationNotice(
+          'Account created. Check your email inbox to confirm your address before signing in.'
+        );
+      }
+    } catch (err) {
+      setErrorMessage(
+        err instanceof Error ? err.message : 'Could not create account.'
+      );
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function handleGoogleSignUp() {
+    setErrorMessage(null);
+    setLoading('google');
+    try {
+      await signInWithGoogle();
+    } catch (err) {
+      setErrorMessage(
+        err instanceof Error ? err.message : 'Unable to complete Google sign-in.'
+      );
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  return (
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.flex}
+      >
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.header}>
+            <ThemedText variant="label" tone="primary">
+              CREATE ACCOUNT
+            </ThemedText>
+            <ThemedText variant="h1">Start your NCLEX-RN pathway</ThemedText>
+            <ThemedText variant="body" muted>
+              We collect only the study profile details needed to tailor your schedule.
+            </ThemedText>
+          </View>
+
+          <Card style={styles.card}>
+            <Input
+              label="Full name"
+              placeholder="Maria Santos, RN"
+              value={fullName}
+              onChangeText={setFullName}
+              autoComplete="name"
+              textContentType="name"
+            />
+            <Input
+              label="Email address"
+              placeholder="nurse@example.com"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoComplete="email"
+              textContentType="emailAddress"
+            />
+            <Input
+              label="Password"
+              placeholder="Minimum 8 characters"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              autoComplete="new-password"
+              textContentType="newPassword"
+            />
+
+            {errorMessage ? (
+              <ThemedText variant="caption" tone="danger" accessibilityRole="alert">
+                {errorMessage}
+              </ThemedText>
+            ) : null}
+
+            {confirmationNotice ? (
+              <ThemedText variant="caption" tone="success" accessibilityRole="status">
+                {confirmationNotice}
+              </ThemedText>
+            ) : null}
+
+            <Button
+              title="Create account"
+              onPress={handleSignUp}
+              loading={loading === 'email'}
+              disabled={loading !== null}
+            />
+
+            <Button
+              title="Sign up with Google"
+              variant="outline"
+              onPress={handleGoogleSignUp}
+              loading={loading === 'google'}
+              disabled={loading !== null}
+            />
+          </Card>
+
+          <View style={styles.footerRow}>
+            <ThemedText variant="body" muted>
+              Already have an account?{' '}
+            </ThemedText>
+            <Link href="/(auth)/sign-in" asChild>
+              <Pressable accessibilityRole="link" style={styles.linkTouch}>
+                <ThemedText variant="label" tone="primary">
+                  Sign in
+                </ThemedText>
+              </Pressable>
+            </Link>
+          </View>
+
+          <DisclaimerBanner compact />
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safe: { flex: 1 },
+  flex: { flex: 1 },
+  content: {
+    padding: spacing.lg,
+    gap: spacing.lg,
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
+  header: {
+    gap: spacing.xs,
+  },
+  card: {
+    gap: spacing.md,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  linkTouch: {
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+});
