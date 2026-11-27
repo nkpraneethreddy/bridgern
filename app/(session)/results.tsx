@@ -15,7 +15,7 @@
  *   quitting as losing accumulated progress.
  */
 
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,6 +25,8 @@ import { radius, spacing } from '../../src/theme/typography';
 import { ThemedText } from '../../src/components/ui/ThemedText';
 import { Card } from '../../src/components/ui/Card';
 import { useSessionStore } from '../../src/stores/sessionStore';
+import { useStudyPlanStore } from '../../src/stores/studyPlanStore';
+import { useAuthStore } from '../../src/stores/authStore';
 
 export default function ResultsScreen() {
   const { colors } = useTheme();
@@ -32,6 +34,32 @@ export default function ResultsScreen() {
   const router = useRouter();
   const session = useSessionStore((s) => s.session);
   const cleanup = useSessionStore((s) => s.cleanup);
+  const profile = useAuthStore((s) => s.profile);
+  const generatePlanFromDiagnostic = useStudyPlanStore((s) => s.generatePlanFromDiagnostic);
+
+  // Automatically calibrate study plan when completing a session
+  useEffect(() => {
+    if (!session || session.history.length === 0) return;
+
+    // Tally category scores from history using categoryId and wasCorrect
+    const categoryScores: Record<string, { answered: number; correct: number }> = {};
+    for (const h of session.history) {
+      const cat = h.categoryId || 'Management of Care';
+      if (!categoryScores[cat]) {
+        categoryScores[cat] = { answered: 0, correct: 0 };
+      }
+      categoryScores[cat].answered += 1;
+      if (h.wasCorrect) {
+        categoryScores[cat].correct += 1;
+      }
+    }
+
+    generatePlanFromDiagnostic({
+      examDate: profile?.exam_date ?? null,
+      weeklyHours: profile?.weekly_study_hours ?? 15,
+      categoryScores,
+    });
+  }, [session, profile, generatePlanFromDiagnostic]);
 
   const stats = useMemo(() => {
     if (!session) return null;

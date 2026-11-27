@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Card } from '../../src/components/ui/Card';
 import { ThemedText } from '../../src/components/ui/ThemedText';
 import { useAuthStore } from '../../src/stores/authStore';
+import { useStudyPlanStore } from '../../src/stores/studyPlanStore';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { radius, spacing } from '../../src/theme/typography';
 
@@ -12,17 +13,22 @@ export default function HomeScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const profile = useAuthStore((s) => s.profile);
+  const { currentPlan, diagnosticCompleted } = useStudyPlanStore();
+
+  const daysRemaining = currentPlan?.daysRemaining ?? 48;
+  const dailyTarget = currentPlan?.dailyQuestionGoal ?? 25;
 
   return (
     <ScrollView
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
     >
       {/* Clinician Header */}
       <View style={styles.headerRow}>
         <View style={styles.greeting}>
           <ThemedText variant="caption" muted style={styles.monoLabel}>
-            IEN PATHWAY · {profile?.target_state ?? 'NY-RN'}
+            IEN PATHWAY Â· {profile?.target_state ?? 'NY-RN'}
           </ThemedText>
           <ThemedText variant="h1">
             {profile?.full_name ? profile.full_name : 'Maria Santos, BSN'}
@@ -43,7 +49,7 @@ export default function HomeScreen() {
           </ThemedText>
           <View style={[styles.pill, { backgroundColor: colors.primarySoft }]}>
             <ThemedText variant="caption" tone="primary" style={styles.mono}>
-              T-48 Days
+              T-{daysRemaining} Days
             </ThemedText>
           </View>
         </View>
@@ -62,9 +68,23 @@ export default function HomeScreen() {
             <ThemedText variant="caption" tone="primary" style={styles.miniMono}>ATT</ThemedText>
             <ThemedText variant="caption" tone="primary" style={styles.milestoneStatus}>Active</ThemedText>
           </View>
-          <View style={[styles.milestoneItem, styles.milestonePending, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
+          <View
+            style={[
+              styles.milestoneItem,
+              diagnosticCompleted
+                ? { backgroundColor: colors.successSoft, borderColor: colors.success }
+                : styles.milestonePending,
+              { backgroundColor: diagnosticCompleted ? colors.successSoft : colors.surfaceElevated, borderColor: colors.border },
+            ]}
+          >
             <ThemedText variant="caption" muted style={styles.miniMono}>NCLEX</ThemedText>
-            <ThemedText variant="caption" muted style={styles.milestoneStatus}>Apr 15</ThemedText>
+            <ThemedText
+              variant="caption"
+              tone={diagnosticCompleted ? 'success' : 'default'}
+              style={styles.milestoneStatus}
+            >
+              {diagnosticCompleted ? 'Calibrated' : 'Scheduled'}
+            </ThemedText>
           </View>
         </View>
 
@@ -73,44 +93,80 @@ export default function HomeScreen() {
             Target: {profile?.weekly_study_hours ?? 15}h/wk
           </ThemedText>
           <ThemedText variant="caption" tone="primary" style={styles.mono}>
-            9.5h Logged
+            Prescribed: {dailyTarget} items/day
           </ThemedText>
         </View>
       </Card>
 
-      {/* Primary Action Card */}
+      {/* Primary Action Card: Diagnostic or Adaptive Practice */}
       <Card elevated style={styles.actionCard}>
         <View style={styles.actionHeader}>
           <View style={styles.actionTextGroup}>
-            <ThemedText variant="h3">25-Item CAT Diagnostic</ThemedText>
+            <ThemedText variant="h3">
+              {diagnosticCompleted ? 'Resume Targeted Adaptive CAT' : '25-Item CAT Diagnostic'}
+            </ThemedText>
             <ThemedText variant="caption" muted>
-              Calibrate baseline accuracy across Client Needs categories.
+              {diagnosticCompleted
+                ? `Focus today: ${currentPlan?.focusCategories[0] ?? 'Pharmacological Therapies'}`
+                : 'Calibrate baseline accuracy across Client Needs categories.'}
             </ThemedText>
           </View>
-          <View style={[styles.tag, { backgroundColor: colors.warningSoft }]}>
-            <ThemedText variant="caption" tone="warning" style={styles.miniMono}>
-              HIGH YIELD
+          <View
+            style={[
+              styles.tag,
+              { backgroundColor: diagnosticCompleted ? colors.successSoft : colors.warningSoft },
+            ]}
+          >
+            <ThemedText
+              variant="caption"
+              tone={diagnosticCompleted ? 'success' : 'warning'}
+              style={styles.miniMono}
+            >
+              {diagnosticCompleted ? 'ACTIVE PLAN' : 'HIGH YIELD'}
             </ThemedText>
           </View>
         </View>
 
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Start calibration diagnostic"
+          accessibilityLabel={diagnosticCompleted ? 'Launch adaptive practice' : 'Start calibration diagnostic'}
           onPress={() => router.push('/(tabs)/practice')}
           style={[styles.primaryButton, { backgroundColor: colors.primary }]}
         >
           <ThemedText variant="label" style={{ color: colors.primaryText }}>
-            Begin Calibration →
+            {diagnosticCompleted ? 'Continue Daily Block â†’' : 'Begin Calibration â†’'}
           </ThemedText>
         </Pressable>
+      </Card>
+
+      {/* Trajectory Analytics Preview Card */}
+      <Card
+        style={[styles.analyticsCard, { borderColor: colors.border }]}
+      >
+        <View style={styles.analyticsHeader}>
+          <ThemedText variant="label">Candidate Performance Report</ThemedText>
+          <Pressable
+            accessibilityRole="link"
+            accessibilityLabel="View full CPR analytics"
+            onPress={() => router.push('/(tabs)/progress')}
+          >
+            <ThemedText variant="caption" tone="primary">
+              View Detailed Analytics â†’
+            </ThemedText>
+          </Pressable>
+        </View>
+        <ThemedText variant="caption" muted>
+          {diagnosticCompleted
+            ? 'Your readiness curve is calibrated against Pearson VUE passing cutoffs across all 8 Client Needs areas.'
+            : 'Diagnostic not completed yet. Take the 25-item baseline to unlock category accuracy.'}
+        </ThemedText>
       </Card>
 
       {/* Subtle Micro-footer */}
       <View style={styles.footerNote}>
         <Ionicons name="shield-checkmark-outline" size={14} color={colors.textMuted} />
         <ThemedText variant="caption" muted style={styles.miniMono}>
-          Pearson VUE Next Gen Format · Pearson-aligned Scoring
+          Pearson VUE Next Gen Format Â· Pearson-aligned Scoring
         </ThemedText>
       </View>
     </ScrollView>
@@ -218,6 +274,15 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  analyticsCard: {
+    padding: spacing.md,
+    gap: spacing.xs,
+  },
+  analyticsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   footerNote: {
     flexDirection: 'row',
