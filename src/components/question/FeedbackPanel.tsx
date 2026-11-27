@@ -1,28 +1,26 @@
 /**
  * FeedbackPanel — shown in tutor mode after submitting an answer.
  *
- * Shows whether the answer was correct, the rationale, and
- * per-option explanations.
- *
- * Unslop: quiet surfaces, one accent bar on the left edge,
- * muted explanatory text. No emoji, no confetti, no "Great job!".
+ * Shows whether the answer was correct, the rationale, per-option explanations,
+ * and an automatic IEN Pharmacology Reference when medications are detected.
  *
  * Psychology:
  * - Elaborative interrogation: rationale forces the learner
  *   to understand WHY, not just memorize the answer.
  * - Desirable difficulty: showing what was missed alongside
  *   what was correct strengthens long-term retention.
- * - Self-determination: neutral tone respects autonomy —
- *   no patronizing praise or discouraging language.
+ * - Self-determination: neutral tone respects autonomy.
  */
 
-import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { radius, spacing } from '../../theme/typography';
 import { ThemedText } from '../ui/ThemedText';
 import { Button } from '../ui/Button';
+import { detectMedicationsInText } from '../../services/ienPharmacopeia';
+import { DrugCard, IENDrugGuideModal } from '../ui/IENDrugGuideModal';
 import type { QuestionWithOptions, ScoreResult } from '../../engine/types';
 
 interface FeedbackPanelProps {
@@ -33,6 +31,11 @@ interface FeedbackPanelProps {
 
 export function FeedbackPanel({ question, result, onContinue }: FeedbackPanelProps) {
   const { colors } = useTheme();
+  const [drugModalOpen, setDrugModalOpen] = useState(false);
+
+  // Scan question text, options, and rationale for any recognized medications
+  const fullText = `${question.stem} ${question.rationale} ${question.options.map((o) => o.label).join(' ')}`;
+  const detectedDrugs = detectMedicationsInText(fullText);
 
   const isPartial =
     result.pointsEarned > 0 && result.pointsEarned < result.pointsPossible;
@@ -127,10 +130,47 @@ export function FeedbackPanel({ question, result, onContinue }: FeedbackPanelPro
         </View>
       )}
 
+      {/* IEN Pharmacology Reference (when medications are detected) */}
+      {detectedDrugs.length > 0 && (
+        <View style={[styles.section, { borderTopColor: colors.border }]}>
+          <View style={styles.drugHeaderRow}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Ionicons name="medical" size={16} color={colors.primary} />
+              <ThemedText variant="label" tone="primary">
+                IEN Pharmacology Reference ({detectedDrugs.length})
+              </ThemedText>
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Open complete IEN drug guide"
+              onPress={() => setDrugModalOpen(true)}
+              style={styles.browseLink}
+            >
+              <ThemedText variant="caption" tone="primary">
+                Browse All Drugs →
+              </ThemedText>
+            </Pressable>
+          </View>
+
+          <View style={styles.drugList}>
+            {detectedDrugs.map((drug) => (
+              <DrugCard key={drug.usGeneric} drug={drug} />
+            ))}
+          </View>
+        </View>
+      )}
+
       <Button
         title="Next question"
         onPress={onContinue}
         accessibilityLabel="Continue to next question"
+      />
+
+      {/* Drug Guide Modal */}
+      <IENDrugGuideModal
+        visible={drugModalOpen}
+        onClose={() => setDrugModalOpen(false)}
+        initialQuery={detectedDrugs[0]?.usGeneric ?? ''}
       />
     </View>
   );
@@ -183,5 +223,18 @@ const styles = StyleSheet.create({
   },
   tabular: {
     fontVariant: ['tabular-nums'],
+  },
+  drugHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  browseLink: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  drugList: {
+    gap: spacing.sm,
   },
 });

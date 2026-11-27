@@ -11,6 +11,7 @@ import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
 import { useRetakeStore } from '../../src/stores/retakeStore';
 import { PaywallModal } from '../../src/components/ui/PaywallModal';
 import { CPRIntakeModal } from '../../src/components/ui/CPRIntakeModal';
+import { IENDrugGuideModal } from '../../src/components/ui/IENDrugGuideModal';
 import { OfflineBanner } from '../../src/components/ui/OfflineBanner';
 import type { SessionConfig } from '../../src/engine/types';
 
@@ -43,6 +44,7 @@ export default function PracticeScreen() {
 
   const [mode, setMode] = useState<Mode>('tutor');
   const [selectedCount, setSelectedCount] = useState<number>(25);
+  const [drugGuideOpen, setDrugGuideOpen] = useState(false);
 
   const handleLaunch = (customCount?: number, categoryOverride?: string[]) => {
     const countToUse = customCount ?? selectedCount;
@@ -234,6 +236,32 @@ export default function PracticeScreen() {
         </Pressable>
       </View>
 
+      {/* IEN Drug Reference Converter Button */}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Open IEN Drug Reference Guide"
+        onPress={() => setDrugGuideOpen(true)}
+        style={[
+          styles.drugGuideStrip,
+          { backgroundColor: colors.surfaceElevated, borderColor: colors.border },
+        ]}
+      >
+        <View style={styles.drugGuideLeft}>
+          <Ionicons name="medical-outline" size={16} color={colors.primary} />
+          <View style={{ gap: 1 }}>
+            <ThemedText variant="caption" tone="primary" style={{ fontWeight: '700' }}>
+              IEN Drug Cross-Reference
+            </ThemedText>
+            <ThemedText variant="caption" muted style={styles.microText}>
+              US vs. International drug names, phonetics & NCLEX rules
+            </ThemedText>
+          </View>
+        </View>
+        <ThemedText variant="caption" tone="primary" style={styles.mono}>
+          Search →
+        </ThemedText>
+      </Pressable>
+
       {/* Session Length Selector */}
       <View style={styles.presetsSection}>
         <ThemedText variant="label" style={styles.sectionLabel}>
@@ -330,6 +358,7 @@ export default function PracticeScreen() {
       {/* Modals */}
       <PaywallModal />
       <CPRIntakeModal />
+      <IENDrugGuideModal visible={drugGuideOpen} onClose={() => setDrugGuideOpen(false)} />
     </ScrollView>
   );
 }
@@ -367,6 +396,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 3,
     gap: 3,
+  },
+  drugGuideStrip: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: spacing.sm,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    minHeight: 48,
+  },
+  drugGuideLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    flex: 1,
   },
   segmentButton: {
     flex: 1,
