@@ -9,6 +9,7 @@ import { useTheme } from '../../src/theme/ThemeProvider';
 import { radius, spacing } from '../../src/theme/typography';
 import { useStudyPlanStore } from '../../src/stores/studyPlanStore';
 import { useRetakeStore } from '../../src/stores/retakeStore';
+import { useStreakStore } from '../../src/stores/streakStore';
 
 const BLUEPRINT_CATEGORIES = [
   { name: 'Management of Care', weight: 18, color: '#0D6E6E' },
@@ -26,6 +27,7 @@ export default function ProgressScreen() {
   const router = useRouter();
   const { currentPlan, diagnosticCompleted, categoryBreakdowns } = useStudyPlanStore();
   const { isRetakeModeActive, pastReport } = useRetakeStore();
+  const { currentStreak, longestStreak, totalDaysPracticed, milestoneReached, dismissMilestone } = useStreakStore();
 
   return (
     <ScrollView
@@ -119,9 +121,70 @@ export default function ProgressScreen() {
         )}
       </Card>
 
+      {/* Study Streak Card */}
+      <Card style={styles.streakCard}>
+        <View style={styles.streakHeader}>
+          <Ionicons name="flame-outline" size={18} color={currentStreak >= 3 ? colors.warning : colors.textMuted} />
+          <ThemedText variant="h3">Practice Streak</ThemedText>
+          {milestoneReached && (
+            <Pressable
+              onPress={dismissMilestone}
+              style={[styles.milestonePill, { backgroundColor: colors.warningSoft }]}
+              accessibilityRole="button"
+              accessibilityLabel="Dismiss milestone"
+            >
+              <ThemedText variant="caption" tone="warning" style={styles.milestoneTxt}>
+                {milestoneReached}-DAY MILESTONE
+              </ThemedText>
+            </Pressable>
+          )}
+        </View>
+
+        <View style={styles.streakStats}>
+          <View style={styles.streakStat}>
+            <ThemedText variant="caption" muted style={styles.streakStatLabel}>
+              CURRENT
+            </ThemedText>
+            <ThemedText variant="h2" style={[styles.mono, { color: currentStreak >= 7 ? colors.success : currentStreak >= 3 ? colors.warning : colors.text }]}>
+              {currentStreak}d
+            </ThemedText>
+          </View>
+          <View style={[styles.streakDivider, { backgroundColor: colors.border }]} />
+          <View style={styles.streakStat}>
+            <ThemedText variant="caption" muted style={styles.streakStatLabel}>
+              PERSONAL BEST
+            </ThemedText>
+            <ThemedText variant="h2" style={styles.mono}>
+              {longestStreak}d
+            </ThemedText>
+          </View>
+          <View style={[styles.streakDivider, { backgroundColor: colors.border }]} />
+          <View style={styles.streakStat}>
+            <ThemedText variant="caption" muted style={styles.streakStatLabel}>
+              TOTAL DAYS
+            </ThemedText>
+            <ThemedText variant="h2" style={styles.mono}>
+              {totalDaysPracticed}
+            </ThemedText>
+          </View>
+        </View>
+
+        {/* Milestone progress dots */}
+        <View style={styles.milestoneDots}>
+          {([3, 7, 14, 30, 45] as const).map((m) => (
+            <View key={m} style={styles.dotGroup}>
+              <View style={[
+                styles.dot,
+                { backgroundColor: currentStreak >= m ? colors.success : colors.surfaceElevated, borderColor: currentStreak >= m ? colors.success : colors.border },
+              ]} />
+              <ThemedText variant="caption" muted style={styles.dotLabel}>{m}d</ThemedText>
+            </View>
+          ))}
+        </View>
+      </Card>
+
       {/* Client Needs Category Breakdown */}
-      <View style={styles.sectionHeader}>
-        <ThemedText variant="h3">Client Needs Performance</ThemedText>
+      <View style={styles.sectionHeader}>        <ThemedText variant="h3">Client Needs Performance</ThemedText>
         <ThemedText variant="caption" muted>
           Accuracy vs. Pearson VUE passing cutoff
         </ThemedText>
@@ -517,6 +580,65 @@ const styles = StyleSheet.create({
   },
   focusList: {
     gap: spacing.xs,
+  },
+
+  // ── Study Streak ──────────────────────────────────────────────────────────
+  streakCard: {
+    padding: spacing.md,
+    gap: spacing.md,
+  },
+  streakHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  milestonePill: {
+    marginLeft: 'auto',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radius.sm,
+  },
+  milestoneTxt: {
+    fontVariant: ['tabular-nums' as const],
+    fontSize: 10,
+    fontWeight: '700' as const,
+    letterSpacing: 0.5,
+  },
+  streakStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  streakStat: {
+    alignItems: 'center',
+    gap: 2,
+  },
+  streakStatLabel: {
+    fontVariant: ['tabular-nums' as const],
+    fontSize: 10,
+    letterSpacing: 0.5,
+  },
+  streakDivider: {
+    width: 1,
+    height: 36,
+  },
+  milestoneDots: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingTop: spacing.xs,
+  },
+  dotGroup: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  dot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
+  dotLabel: {
+    fontSize: 10,
   },
 
   // ── Retake Roadmap ────────────────────────────────────────────────────────

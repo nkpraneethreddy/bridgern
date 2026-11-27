@@ -1,18 +1,61 @@
 {
   "cli": {
-    "version": ">= 12.0.0"
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "ios": {
+        "simulator": true
+      },
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_ENV": "development"
+      }
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "channel": "preview",
+      "ios": {
+        "simulator": false
+      },
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_ENV": "preview"
+      }
     },
-    "production": {}
+    "production": {
+      "autoIncrement": true,
+      "channel": "production",
+      "ios": {
+        "enterpriseProvisioning": "adhoc"
+      },
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "env": {
+        "EXPO_PUBLIC_ENV": "production"
+      }
+    }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "appleTeamId": "REPLACE_WITH_APPLE_TEAM_ID",
+        "appStoreConnectApiKeyPath": "./keys/app-store-connect-api-key.p8",
+        "appStoreConnectApiKeyIssuerId": "REPLACE_WITH_ISSUER_ID",
+        "appStoreConnectApiKeyId": "REPLACE_WITH_KEY_ID"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./keys/google-play-service-account.json",
+        "track": "internal"
+      }
+    }
   }
 }
