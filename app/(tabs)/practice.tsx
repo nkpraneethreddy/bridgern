@@ -1,51 +1,32 @@
-/**
- * Practice tab — session launcher.
- *
- * Unslop design:
- * - Quiet chrome with one teal accent on primary actions
- * - 4px grid spacing, sentence case labels
- * - No emoji, no "✨", no uppercase tracked labels
- * - Cards use nested radius (outer 16, inner 12)
- * - Tabular numbers for stats
- *
- * Psychology:
- * - Default effect: tutor mode is pre-selected (the safer,
- *   learning-oriented choice) to reduce decision paralysis.
- * - Anchoring: question counts are anchored to NCLEX-familiar
- *   values (25, 75, 145) so the practice feels exam-authentic.
- * - Autonomy support: mode selection respects the learner's
- *   agency rather than pushing them toward one option.
- * - Social proof (subtle): "Most IENs start with 25 questions"
- *   normalizes the smaller starting point to reduce overwhelm.
- * - Implementation intention: choosing settings = planning =
- *   higher follow-through (Gollwitzer, 1999).
- */
-
 import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { DisclaimerBanner } from '../../src/components/DisclaimerBanner';
-import { Card } from '../../src/components/ui/Card';
-import { Button } from '../../src/components/ui/Button';
 import { ThemedText } from '../../src/components/ui/ThemedText';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { radius, spacing } from '../../src/theme/typography';
 import { useSessionStore } from '../../src/stores/sessionStore';
-import type { SessionConfig, QuestionWithOptions } from '../../src/engine/types';
-
-// ─── Placeholder pool for local testing ─────────────────────────────
-// In production this comes from fetchQuestions(); during MVP dev
-// we generate a minimal set so the UI is testable without Supabase.
 import { createPlaceholderPool } from '../../src/engine/placeholderPool';
+import type { SessionConfig } from '../../src/engine/types';
 
 type Mode = 'tutor' | 'exam';
 
-const QUESTION_PRESETS = [
-  { label: '10 questions', value: 10, hint: 'Quick review' },
-  { label: '25 questions', value: 25, hint: 'Most IENs start here' },
-  { label: '75 questions', value: 75, hint: 'NCLEX minimum' },
-  { label: '145 questions', value: 145, hint: 'Full-length exam' },
+const PRESETS = [
+  { count: 10, label: 'Quick Diagnostic', duration: '15 min' },
+  { count: 25, label: 'Standard CAT Block', duration: '38 min' },
+  { count: 75, label: 'NCLEX Minimum Length', duration: '1 hr 52 min' },
+  { count: 145, label: 'Full Adaptive Simulation', duration: '3 hr 38 min' },
+];
+
+const BLUEPRINT = [
+  { name: 'Management of Care', weight: 18, color: '#0D6E6E' },
+  { name: 'Pharmacological & Parenteral', weight: 16, color: '#2563EB' },
+  { name: 'Physiological Adaptation', weight: 14, color: '#DB2777' },
+  { name: 'Safety & Infection Control', weight: 13, color: '#7C3AED' },
+  { name: 'Reduction of Risk Potential', weight: 12, color: '#EA580C' },
+  { name: 'Basic Care & Comfort', weight: 9, color: '#059669' },
+  { name: 'Psychosocial Integrity', weight: 9, color: '#4B5563' },
+  { name: 'Health Promotion & Maint.', weight: 9, color: '#65A30D' },
 ];
 
 export default function PracticeScreen() {
@@ -54,19 +35,17 @@ export default function PracticeScreen() {
   const startSession = useSessionStore((s) => s.startSession);
 
   const [mode, setMode] = useState<Mode>('tutor');
-  const [questionCount, setQuestionCount] = useState(25);
+  const [selectedCount, setSelectedCount] = useState<number>(25);
 
-  const handleStart = () => {
+  const handleLaunch = () => {
     const pool = createPlaceholderPool();
-
     const config: SessionConfig = {
       mode,
-      maxQuestions: questionCount,
-      timeLimitSeconds: mode === 'exam' ? questionCount * 90 : 0, // ~90s per question in exam
+      maxQuestions: selectedCount,
+      timeLimitSeconds: mode === 'exam' ? selectedCount * 90 : 0,
       categoryFilter: [],
       startingDifficulty: 3,
     };
-
     startSession(config, pool);
     router.push('/(session)/question');
   };
@@ -74,193 +53,285 @@ export default function PracticeScreen() {
   return (
     <ScrollView
       style={{ backgroundColor: colors.background }}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={styles.container}
     >
-      <ThemedText variant="h2">Practice</ThemedText>
-      <ThemedText variant="body" muted>
-        Choose your practice mode and session length.
-      </ThemedText>
+      {/* Clinician Header Strip */}
+      <View style={styles.header}>
+        <ThemedText variant="caption" muted style={styles.monoHeading}>
+          TEST WORKSTATION · CAT ENGINE v2.4
+        </ThemedText>
+        <ThemedText variant="h1">Adaptive Practice</ThemedText>
+      </View>
 
-      {/* Mode selector */}
-      <View style={styles.modeRow}>
+      {/* Mode Switcher: Physical Segmented Control */}
+      <View style={[styles.modeSegment, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
         <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Tutor mode with instant rationale"
           onPress={() => setMode('tutor')}
-          accessibilityRole="radio"
-          accessibilityState={{ checked: mode === 'tutor' }}
-          accessibilityLabel="Tutor mode: instant feedback after each question"
           style={[
-            styles.modeCard,
-            {
-              backgroundColor: mode === 'tutor' ? colors.primarySoft : colors.surface,
-              borderColor: mode === 'tutor' ? colors.primary : colors.border,
-            },
+            styles.segmentButton,
+            mode === 'tutor' && [styles.segmentActive, { backgroundColor: colors.surface, borderColor: colors.border }],
           ]}
         >
           <Ionicons
             name="school-outline"
-            size={20}
+            size={16}
             color={mode === 'tutor' ? colors.primary : colors.textMuted}
           />
-          <ThemedText
-            variant="label"
-            tone={mode === 'tutor' ? 'primary' : 'default'}
-          >
-            Tutor
-          </ThemedText>
-          <ThemedText variant="caption" muted>
-            Instant feedback and rationale
-          </ThemedText>
+          <View>
+            <ThemedText variant="label" tone={mode === 'tutor' ? 'primary' : 'default'}>
+              Tutor Mode
+            </ThemedText>
+            <ThemedText variant="caption" muted style={styles.microText}>
+              Instant clinical rationale & debrief
+            </ThemedText>
+          </View>
         </Pressable>
 
         <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Exam CAT mode without feedback"
           onPress={() => setMode('exam')}
-          accessibilityRole="radio"
-          accessibilityState={{ checked: mode === 'exam' }}
-          accessibilityLabel="Exam mode: timed, no feedback until the end"
           style={[
-            styles.modeCard,
-            {
-              backgroundColor: mode === 'exam' ? colors.primarySoft : colors.surface,
-              borderColor: mode === 'exam' ? colors.primary : colors.border,
-            },
+            styles.segmentButton,
+            mode === 'exam' && [styles.segmentActive, { backgroundColor: colors.surface, borderColor: colors.border }],
           ]}
         >
           <Ionicons
             name="timer-outline"
-            size={20}
+            size={16}
             color={mode === 'exam' ? colors.primary : colors.textMuted}
           />
-          <ThemedText
-            variant="label"
-            tone={mode === 'exam' ? 'primary' : 'default'}
-          >
-            Exam
-          </ThemedText>
-          <ThemedText variant="caption" muted>
-            Timed, adaptive, no feedback
-          </ThemedText>
+          <View>
+            <ThemedText variant="label" tone={mode === 'exam' ? 'primary' : 'default'}>
+              Exam (CAT)
+            </ThemedText>
+            <ThemedText variant="caption" muted style={styles.microText}>
+              Timed, zero feedback until completion
+            </ThemedText>
+          </View>
         </Pressable>
       </View>
 
-      {/* Question count */}
-      <Card>
-        <ThemedText variant="label" muted>
-          Session length
-        </ThemedText>
-        <View style={styles.presets}>
-          {QUESTION_PRESETS.map((preset) => (
-            <Pressable
-              key={preset.value}
-              onPress={() => setQuestionCount(preset.value)}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: questionCount === preset.value }}
+      {/* The One Craft Moment: Blueprint Distribution Strip */}
+      <View style={[styles.blueprintBlock, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <View style={styles.blueprintTitleRow}>
+          <ThemedText variant="label">Client Needs Blueprint</ThemedText>
+          <ThemedText variant="caption" tone="primary" style={styles.mono}>
+            100% Calibrated
+          </ThemedText>
+        </View>
+
+        {/* Proportional Segmented Strip */}
+        <View style={styles.stripTrack}>
+          {BLUEPRINT.map((b) => (
+            <View
+              key={b.name}
               style={[
-                styles.preset,
-                {
-                  backgroundColor:
-                    questionCount === preset.value
-                      ? colors.primarySoft
-                      : colors.surfaceElevated,
-                  borderColor:
-                    questionCount === preset.value
-                      ? colors.primary
-                      : colors.border,
-                },
+                styles.stripSegment,
+                { width: `${b.weight}%`, backgroundColor: b.color },
               ]}
-            >
-              <ThemedText
-                variant="bodyMedium"
-                tone={questionCount === preset.value ? 'primary' : 'default'}
-                style={styles.tabular}
-              >
-                {preset.value}
-              </ThemedText>
-              <ThemedText variant="caption" muted>
-                {preset.hint}
-              </ThemedText>
-            </Pressable>
+            />
           ))}
         </View>
-      </Card>
 
-      {/* Session summary before launch */}
-      <Card elevated>
-        <View style={styles.summaryRow}>
-          <ThemedText variant="body" muted>Mode</ThemedText>
-          <ThemedText variant="bodyMedium">
-            {mode === 'tutor' ? 'Tutor' : 'Exam'}
-          </ThemedText>
+        {/* Blueprint Legend Grid */}
+        <View style={styles.legendGrid}>
+          {BLUEPRINT.slice(0, 4).map((b) => (
+            <View key={b.name} style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: b.color }]} />
+              <ThemedText variant="caption" muted style={styles.legendLabel}>
+                {b.name} ({b.weight}%)
+              </ThemedText>
+            </View>
+          ))}
         </View>
-        <View style={styles.summaryRow}>
-          <ThemedText variant="body" muted>Questions</ThemedText>
-          <ThemedText variant="bodyMedium" style={styles.tabular}>
-            {questionCount}
-          </ThemedText>
+      </View>
+
+      {/* Session Length: Linear Selectors */}
+      <View style={styles.presetsSection}>
+        <ThemedText variant="label" style={styles.sectionLabel}>
+          Session Target
+        </ThemedText>
+        <View style={styles.presetsList}>
+          {PRESETS.map((p) => {
+            const isSelected = selectedCount === p.count;
+            return (
+              <Pressable
+                key={p.count}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: isSelected }}
+                onPress={() => setSelectedCount(p.count)}
+                style={[
+                  styles.presetRow,
+                  {
+                    backgroundColor: isSelected ? colors.primarySoft : colors.surface,
+                    borderColor: isSelected ? colors.primary : colors.border,
+                  },
+                ]}
+              >
+                <View style={styles.presetLeft}>
+                  <ThemedText variant="label" tone={isSelected ? 'primary' : 'default'} style={styles.presetCount}>
+                    {p.count} Items
+                  </ThemedText>
+                  <ThemedText variant="caption" muted>
+                    {p.label}
+                  </ThemedText>
+                </View>
+                <ThemedText variant="caption" muted style={styles.mono}>
+                  {p.duration}
+                </ThemedText>
+              </Pressable>
+            );
+          })}
         </View>
-        {mode === 'exam' && (
-          <View style={styles.summaryRow}>
-            <ThemedText variant="body" muted>Time limit</ThemedText>
-            <ThemedText variant="bodyMedium" style={styles.tabular}>
-              {Math.round((questionCount * 90) / 60)} min
-            </ThemedText>
-          </View>
-        )}
-      </Card>
+      </View>
 
-      <Button
-        title={
-          mode === 'exam'
-            ? `Start ${questionCount}-question exam (${Math.round((questionCount * 90) / 60)} min)`
-            : `Start ${questionCount}-question tutor session`
-        }
-        onPress={handleStart}
-        accessibilityLabel={`Start ${mode} session with ${questionCount} questions`}
-      />
+      {/* Launch Action */}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Begin ${selectedCount} item ${mode} session`}
+        onPress={handleLaunch}
+        style={[styles.launchButton, { backgroundColor: colors.primary }]}
+      >
+        <ThemedText variant="label" style={{ color: colors.primaryText, fontSize: 16 }}>
+          Begin {selectedCount}-Item Session →
+        </ThemedText>
+      </Pressable>
 
-      <DisclaimerBanner compact />
+      <View style={styles.footerNote}>
+        <ThemedText variant="caption" muted style={styles.miniMono}>
+          Pearson VUE Next Gen Format · Pearson-aligned Scoring
+        </ThemedText>
+      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
+  container: {
     padding: spacing.md,
     gap: spacing.md,
+    paddingBottom: spacing.xl,
   },
-  modeRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  modeCard: {
-    flex: 1,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderRadius: radius.lg,
-    gap: spacing.xs,
-    alignItems: 'center',
-  },
-  presets: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    marginTop: spacing.sm,
-  },
-  preset: {
-    flex: 1,
-    minWidth: 80,
-    padding: spacing.sm,
-    borderWidth: 1,
-    borderRadius: radius.sm,
-    alignItems: 'center',
+  header: {
+    paddingTop: spacing.xs,
     gap: 2,
   },
-  summaryRow: {
+  monoHeading: {
+    fontVariant: ['tabular-nums'],
+    letterSpacing: 0.5,
+  },
+  mono: {
+    fontVariant: ['tabular-nums'],
+    fontWeight: '600',
+  },
+  miniMono: {
+    fontVariant: ['tabular-nums'],
+    fontSize: 10,
+  },
+  microText: {
+    fontSize: 11,
+    marginTop: 2,
+  },
+  modeSegment: {
+    borderRadius: radius.md,
+    borderWidth: 1,
+    padding: 3,
+    gap: 3,
+  },
+  segmentButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.sm,
+    borderRadius: radius.sm,
+    gap: spacing.sm,
+    minHeight: 48,
+  },
+  segmentActive: {
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  blueprintBlock: {
+    padding: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    gap: spacing.sm,
+  },
+  blueprintTitleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: spacing.xs,
   },
-  tabular: {
-    fontVariant: ['tabular-nums'],
+  stripTrack: {
+    height: 8,
+    borderRadius: 4,
+    flexDirection: 'row',
+    overflow: 'hidden',
+    gap: 1,
+  },
+  stripSegment: {
+    height: '100%',
+  },
+  legendGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+    paddingTop: spacing.xs,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    width: '48%',
+  },
+  legendDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  legendLabel: {
+    fontSize: 11,
+  },
+  presetsSection: {
+    gap: spacing.xs,
+  },
+  sectionLabel: {
+    marginBottom: 2,
+  },
+  presetsList: {
+    gap: spacing.xs,
+  },
+  presetRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: 14,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    minHeight: 52,
+  },
+  presetLeft: {
+    gap: 2,
+  },
+  presetCount: {
+    fontWeight: '700',
+  },
+  launchButton: {
+    height: 52,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing.xs,
+  },
+  footerNote: {
+    alignItems: 'center',
+    paddingVertical: spacing.xs,
   },
 });

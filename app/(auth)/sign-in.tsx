@@ -68,9 +68,12 @@ export default function SignInScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.header}>
+            <ThemedText variant="caption" muted style={styles.monoHeading}>
+              EXAMINATION PORTAL
+            </ThemedText>
             <ThemedText variant="display">BridgeRN</ThemedText>
             <ThemedText variant="body" muted>
-              Calm, structured NCLEX-RN prep for internationally educated nurses.
+              Authorized portal for internationally educated nurse licensure.
             </ThemedText>
           </View>
 
@@ -173,6 +176,10 @@ const styles = StyleSheet.create({
   },
   header: {
     gap: spacing.xs,
+  },
+  monoHeading: {
+    fontVariant: ['tabular-nums'],
+    letterSpacing: 0.5,
   },
   bannerText: {
     marginTop: 4,

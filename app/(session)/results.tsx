@@ -16,15 +16,14 @@
  */
 
 import React, { useMemo } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { radius, spacing } from '../../src/theme/typography';
 import { ThemedText } from '../../src/components/ui/ThemedText';
 import { Card } from '../../src/components/ui/Card';
-import { Button } from '../../src/components/ui/Button';
-import { DisclaimerBanner } from '../../src/components/DisclaimerBanner';
 import { useSessionStore } from '../../src/stores/sessionStore';
 
 export default function ResultsScreen() {
@@ -37,34 +36,15 @@ export default function ResultsScreen() {
   const stats = useMemo(() => {
     if (!session) return null;
 
-    const { history, readiness, totalPointsEarned, totalPointsPossible, elapsedSeconds } =
-      session;
+    const { history, readiness, totalPointsEarned, totalPointsPossible, elapsedSeconds } = session;
 
-    const accuracy =
-      totalPointsPossible > 0
-        ? Math.round((totalPointsEarned / totalPointsPossible) * 100)
-        : 0;
+    const accuracy = totalPointsPossible > 0
+      ? Math.round((totalPointsEarned / totalPointsPossible) * 100)
+      : 0;
 
-    const avgTime =
-      history.length > 0
-        ? Math.round(
-            history.reduce((sum, a) => sum + a.timeSpentSeconds, 0) /
-              history.length,
-          )
-        : 0;
-
-    // Category breakdown
-    const categoryStats: Record<
-      string,
-      { correct: number; total: number }
-    > = {};
-    for (const a of history) {
-      if (!categoryStats[a.categoryId]) {
-        categoryStats[a.categoryId] = { correct: 0, total: 0 };
-      }
-      categoryStats[a.categoryId].total += 1;
-      if (a.wasCorrect) categoryStats[a.categoryId].correct += 1;
-    }
+    const avgPace = history.length > 0
+      ? Math.round(history.reduce((acc, h) => acc + h.timeSpentSeconds, 0) / history.length)
+      : 0;
 
     const totalMins = Math.floor(elapsedSeconds / 60);
     const totalSecs = elapsedSeconds % 60;
@@ -72,180 +52,277 @@ export default function ResultsScreen() {
     return {
       totalQuestions: history.length,
       accuracy,
-      avgTime,
+      avgPace,
       readiness,
-      categoryStats,
       totalTime: `${totalMins}:${totalSecs.toString().padStart(2, '0')}`,
       totalPointsEarned,
       totalPointsPossible,
     };
   }, [session]);
 
-  const handleDone = () => {
-    cleanup();
-    router.replace('/(tabs)/practice');
-  };
-
-  const handleStudyMore = () => {
+  const handleReturn = () => {
     cleanup();
     router.replace('/(tabs)/practice');
   };
 
   if (!stats) return null;
 
+  // Passing line threshold on standard NCLEX scale
+  const passCutoff = 65;
+  const isPassing = stats.readiness.low >= passCutoff;
+
   return (
     <ScrollView
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={[
-        styles.content,
+        styles.container,
         { paddingBottom: spacing.xl + insets.bottom },
       ]}
     >
-      <ThemedText variant="h2">Session complete</ThemedText>
-
-      {/* Readiness estimate — primary visual moment */}
-      <Card>
-        <ThemedText variant="h3">Readiness estimate</ThemedText>
-        <View style={styles.readinessRow}>
-          <View style={styles.readinessRange}>
-            <View
-              style={[
-                styles.readinessBar,
-                { backgroundColor: colors.surfaceElevated },
-              ]}
-            >
-              <View
-                style={[
-                  styles.readinessRangeBar,
-                  {
-                    backgroundColor: colors.primary,
-                    left: `${stats.readiness.low}%`,
-                    width: `${Math.max(1, stats.readiness.high - stats.readiness.low)}%`,
-                  },
-                ]}
-              />
-            </View>
-            <View style={styles.readinessLabels}>
-              <ThemedText variant="caption" muted style={styles.tabular}>
-                {stats.readiness.low}%
-              </ThemedText>
-              <ThemedText variant="label" tone="primary" style={styles.tabular}>
-                {stats.readiness.mid}%
-              </ThemedText>
-              <ThemedText variant="caption" muted style={styles.tabular}>
-                {stats.readiness.high}%
-              </ThemedText>
-            </View>
-          </View>
-        </View>
-        <ThemedText variant="caption" muted style={styles.disclaimer}>
-          Confidence range based on {stats.totalQuestions} questions.
-          This is not a prediction of exam outcome.
+      {/* Clinician Header */}
+      <View style={styles.header}>
+        <ThemedText variant="caption" muted style={styles.monoHeading}>
+          CANDIDATE PERFORMANCE REPORT · CAT SIMULATION
         </ThemedText>
-      </Card>
-
-      {/* Single unified session breakdown */}
-      <Card>
-        <ThemedText variant="h3">Session breakdown</ThemedText>
-        <View style={[styles.summaryRow, { borderBottomColor: colors.border }]}>
-          <ThemedText variant="body" muted>Questions answered</ThemedText>
-          <ThemedText variant="bodyMedium" style={styles.tabular}>
-            {stats.totalQuestions}
-          </ThemedText>
-        </View>
-        <View style={[styles.summaryRow, { borderBottomColor: colors.border }]}>
-          <ThemedText variant="body" muted>Accuracy</ThemedText>
-          <ThemedText variant="bodyMedium" style={styles.tabular}>
-            {stats.accuracy}%
-          </ThemedText>
-        </View>
-        <View style={[styles.summaryRow, { borderBottomColor: colors.border }]}>
-          <ThemedText variant="body" muted>Average pace</ThemedText>
-          <ThemedText variant="bodyMedium" style={styles.tabular}>
-            {stats.avgTime}s / item
-          </ThemedText>
-        </View>
-        <View style={[styles.summaryRow, { borderBottomColor: colors.border }]}>
-          <ThemedText variant="body" muted>Total time</ThemedText>
-          <ThemedText variant="bodyMedium" style={styles.tabular}>
-            {stats.totalTime}
-          </ThemedText>
-        </View>
-        <View style={styles.summaryRowLast}>
-          <ThemedText variant="body" muted>Points earned</ThemedText>
-          <ThemedText variant="bodyMedium" style={styles.tabular}>
-            {stats.totalPointsEarned}/{stats.totalPointsPossible}
-          </ThemedText>
-        </View>
-      </Card>
-
-      {/* Actions */}
-      <View style={styles.actions}>
-        <Button
-          title="Continue studying"
-          onPress={handleStudyMore}
-          accessibilityLabel="Start another practice session"
-        />
-        <Button
-          title="Back to practice"
-          variant="outline"
-          onPress={handleDone}
-        />
+        <ThemedText variant="h1">Examination Results</ThemedText>
       </View>
 
-      <DisclaimerBanner />
+      {/* The One Craft Moment: Wilson Score Ability Distribution Curve */}
+      <Card style={styles.hudCard}>
+        <View style={styles.hudTopRow}>
+          <View>
+            <ThemedText variant="label">Readiness Confidence Interval</ThemedText>
+            <ThemedText variant="caption" muted style={styles.microText}>
+              95% Wilson score estimate ({stats.totalQuestions} items sampled)
+            </ThemedText>
+          </View>
+          <View style={[styles.statusTag, { backgroundColor: isPassing ? colors.successSoft : colors.primarySoft }]}>
+            <ThemedText variant="caption" tone={isPassing ? 'success' : 'primary'} style={styles.monoStatus}>
+              {isPassing ? 'ABOVE PASSING' : 'CALIBRATED'}
+            </ThemedText>
+          </View>
+        </View>
+
+        {/* Graphical Ability Axis */}
+        <View style={styles.curveContainer}>
+          <View style={[styles.curveTrack, { backgroundColor: colors.surfaceElevated }]}>
+            {/* Cutoff Reference Line at 65% */}
+            <View style={[styles.cutoffLine, { left: `${passCutoff}%`, backgroundColor: colors.border }]} />
+            {/* Confidence Interval Band */}
+            <View
+              style={[
+                styles.intervalBand,
+                {
+                  left: `${stats.readiness.low}%`,
+                  width: `${Math.max(4, stats.readiness.high - stats.readiness.low)}%`,
+                  backgroundColor: colors.primary,
+                },
+              ]}
+            />
+          </View>
+
+          {/* Axis Labels */}
+          <View style={styles.axisLabels}>
+            <ThemedText variant="caption" muted style={styles.monoAxis}>
+              {stats.readiness.low}% (Min)
+            </ThemedText>
+            <View style={styles.cutoffLabelGroup}>
+              <ThemedText variant="caption" muted style={styles.monoAxisCutoff}>
+                Pass Standard ({passCutoff}%)
+              </ThemedText>
+            </View>
+            <ThemedText variant="caption" muted style={styles.monoAxis}>
+              {stats.readiness.high}% (Max)
+            </ThemedText>
+          </View>
+        </View>
+
+        <View style={[styles.hudFooter, { borderTopColor: colors.border }]}>
+          <Ionicons name="information-circle-outline" size={14} color={colors.textMuted} />
+          <ThemedText variant="caption" muted style={styles.hudFootnote}>
+            Confidence ranges widen with shorter sets; full CAT blocks narrow the bound.
+          </ThemedText>
+        </View>
+      </Card>
+
+      {/* Unified Telemetry Strip */}
+      <View style={styles.metricGrid}>
+        <View style={[styles.metricTile, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <ThemedText variant="caption" muted style={styles.miniLabel}>
+            ACCURACY
+          </ThemedText>
+          <ThemedText variant="h2" style={styles.monoVal}>
+            {stats.accuracy}%
+          </ThemedText>
+          <ThemedText variant="caption" muted style={styles.microText}>
+            {stats.totalPointsEarned}/{stats.totalPointsPossible} pts
+          </ThemedText>
+        </View>
+
+        <View style={[styles.metricTile, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <ThemedText variant="caption" muted style={styles.miniLabel}>
+            AVG PACE
+          </ThemedText>
+          <ThemedText variant="h2" style={styles.monoVal}>
+            {stats.avgPace}s
+          </ThemedText>
+          <ThemedText variant="caption" muted style={styles.microText}>
+            Target: &lt;90s/item
+          </ThemedText>
+        </View>
+
+        <View style={[styles.metricTile, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <ThemedText variant="caption" muted style={styles.miniLabel}>
+            SESSION TIME
+          </ThemedText>
+          <ThemedText variant="h2" style={styles.monoVal}>
+            {stats.totalTime}
+          </ThemedText>
+          <ThemedText variant="caption" muted style={styles.microText}>
+            {stats.totalQuestions} items
+          </ThemedText>
+        </View>
+      </View>
+
+      {/* Action Buttons */}
+      <View style={styles.actions}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Return to practice test workstation"
+          onPress={handleReturn}
+          style={[styles.primaryBtn, { backgroundColor: colors.primary }]}
+        >
+          <ThemedText variant="label" style={{ color: colors.primaryText, fontSize: 16 }}>
+            Return to Test Workstation →
+          </ThemedText>
+        </Pressable>
+      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
+  container: {
     padding: spacing.md,
     gap: spacing.md,
   },
-  readinessRow: {
-    marginTop: spacing.sm,
+  header: {
+    paddingTop: spacing.xs,
+    gap: 2,
   },
-  readinessRange: {
+  monoHeading: {
+    fontVariant: ['tabular-nums'],
+    letterSpacing: 0.5,
+  },
+  mono: {
+    fontVariant: ['tabular-nums'],
+  },
+  monoStatus: {
+    fontVariant: ['tabular-nums'],
+    fontWeight: '700',
+    fontSize: 10,
+    letterSpacing: 0.5,
+  },
+  monoAxis: {
+    fontVariant: ['tabular-nums'],
+    fontSize: 10,
+  },
+  monoAxisCutoff: {
+    fontVariant: ['tabular-nums'],
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  monoVal: {
+    fontVariant: ['tabular-nums'],
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  miniLabel: {
+    fontVariant: ['tabular-nums'],
+    fontSize: 10,
+    letterSpacing: 0.5,
+  },
+  microText: {
+    fontSize: 11,
+    marginTop: 2,
+  },
+  hudCard: {
+    padding: spacing.md,
+    borderRadius: radius.md,
+    gap: spacing.md,
+  },
+  hudTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  statusTag: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: radius.sm,
+  },
+  curveContainer: {
     gap: spacing.xs,
+    paddingVertical: spacing.xs,
   },
-  readinessBar: {
-    height: 8,
-    borderRadius: 4,
+  curveTrack: {
+    height: 12,
+    borderRadius: 6,
     overflow: 'hidden',
     position: 'relative',
   },
-  readinessRangeBar: {
+  cutoffLine: {
     position: 'absolute',
     top: 0,
-    height: 8,
-    borderRadius: 4,
+    bottom: 0,
+    width: 2,
+    zIndex: 10,
   },
-  readinessLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: spacing.xs,
+  intervalBand: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    borderRadius: 6,
   },
-  disclaimer: {
-    marginTop: spacing.sm,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-    borderBottomWidth: 1,
-  },
-  summaryRowLast: {
+  axisLabels: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingTop: 2,
+  },
+  cutoffLabelGroup: {
+    alignItems: 'center',
+  },
+  hudFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
     paddingTop: spacing.sm,
+    borderTopWidth: 1,
   },
-  tabular: {
-    fontVariant: ['tabular-nums'],
+  hudFootnote: {
+    flex: 1,
+    fontSize: 11,
+  },
+  metricGrid: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  metricTile: {
+    flex: 1,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   actions: {
-    gap: spacing.sm,
+    marginTop: spacing.xs,
+  },
+  primaryBtn: {
+    height: 52,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

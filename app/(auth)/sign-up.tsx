@@ -86,9 +86,12 @@ export default function SignUpScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.header}>
-            <ThemedText variant="h1">Create your BridgeRN account</ThemedText>
+            <ThemedText variant="caption" muted style={styles.monoHeading}>
+              CANDIDATE REGISTRATION
+            </ThemedText>
+            <ThemedText variant="h1">Start Licensure Pathway</ThemedText>
             <ThemedText variant="body" muted>
-              We collect only the study profile details needed to tailor your schedule.
+              Profile data is encrypted in transit and used solely for CAT calibration.
             </ThemedText>
           </View>
 
@@ -180,6 +183,10 @@ const styles = StyleSheet.create({
   },
   header: {
     gap: spacing.xs,
+  },
+  monoHeading: {
+    fontVariant: ['tabular-nums'],
+    letterSpacing: 0.5,
   },
   card: {
     gap: spacing.md,
