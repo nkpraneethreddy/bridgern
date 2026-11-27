@@ -16,6 +16,7 @@
 import React, { useCallback, useEffect } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { spacing } from '../../src/theme/typography';
 import { useSessionStore } from '../../src/stores/sessionStore';
@@ -29,6 +30,7 @@ import type { QuestionResponse } from '../../src/engine/types';
 
 export default function QuestionScreen() {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const {
     session,
@@ -82,7 +84,10 @@ export default function QuestionScreen() {
   return (
     <ScrollView
       style={{ backgroundColor: colors.background }}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[
+        styles.content,
+        { paddingBottom: spacing.xl + insets.bottom },
+      ]}
       keyboardShouldPersistTaps="handled"
     >
       {/* Session header with progress */}

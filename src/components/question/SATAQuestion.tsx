@@ -9,6 +9,7 @@
 
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { radius, spacing } from '../../theme/typography';
 import { ThemedText } from '../ui/ThemedText';
@@ -96,12 +97,11 @@ export function SATAQuestion({ question, onSubmit, feedback, disabled }: Props) 
                 ]}
               >
                 {(isSelected || fb === 'correct') && (
-                  <ThemedText
-                    variant="caption"
-                    style={{ color: colors.primaryText, fontSize: 11 }}
-                  >
-                    ✓
-                  </ThemedText>
+                  <Ionicons
+                    name="checkmark"
+                    size={15}
+                    color={colors.primaryText}
+                  />
                 )}
               </View>
               <View style={styles.optionContent}>

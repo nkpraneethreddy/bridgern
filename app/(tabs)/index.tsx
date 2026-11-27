@@ -17,23 +17,19 @@ export default function HomeScreen() {
       contentContainerStyle={styles.content}
     >
       <View style={styles.greeting}>
-        <ThemedText variant="h1">
-          Welcome{profile?.full_name ? `, ${profile.full_name}` : ''}
-        </ThemedText>
+        <ThemedText variant="h1">Study overview</ThemedText>
         <ThemedText variant="body" muted>
-          {profile?.country_of_education ?? 'IEN'} → Target Board:{' '}
-          {profile?.target_state ?? 'Not set'}
+          {profile?.full_name ? `${profile.full_name} · ` : ''}
+          {profile?.country_of_education ?? 'IEN'} → {profile?.target_state ?? 'Target board not set'}
         </ThemedText>
       </View>
 
       <Card>
-        <ThemedText variant="label" tone="primary">
-          STUDY SNAPSHOT
-        </ThemedText>
+        <ThemedText variant="h3">Study schedule</ThemedText>
         <View style={styles.row}>
           <View style={styles.metric}>
             <ThemedText variant="caption" muted>
-              Current Location
+              Current location
             </ThemedText>
             <ThemedText variant="bodyMedium">
               {profile?.current_country ?? '—'}
@@ -41,17 +37,17 @@ export default function HomeScreen() {
           </View>
           <View style={styles.metric}>
             <ThemedText variant="caption" muted>
-              Weekly Goal
+              Weekly goal
             </ThemedText>
-            <ThemedText variant="bodyMedium">
+            <ThemedText variant="bodyMedium" style={styles.tabular}>
               {profile?.weekly_study_hours ?? 10} hrs/wk
             </ThemedText>
           </View>
           <View style={styles.metric}>
             <ThemedText variant="caption" muted>
-              Exam Date
+              Exam date
             </ThemedText>
-            <ThemedText variant="bodyMedium">
+            <ThemedText variant="bodyMedium" style={styles.tabular}>
               {profile?.exam_date ?? 'Pending ATT'}
             </ThemedText>
           </View>
@@ -59,7 +55,7 @@ export default function HomeScreen() {
       </Card>
 
       <Card elevated>
-        <ThemedText variant="h3">Next Milestone: 25-Question Diagnostic</ThemedText>
+        <ThemedText variant="h3">Next milestone: 25-question diagnostic</ThemedText>
         <ThemedText variant="body" muted style={styles.cardBody}>
           Coming in Phase 2 & 3: take a calm baseline assessment across all NCLEX-RN
           Client Needs categories to generate your tailored study plan.
@@ -91,5 +87,8 @@ const styles = StyleSheet.create({
   },
   cardBody: {
     marginTop: spacing.xs,
+  },
+  tabular: {
+    fontVariant: ['tabular-nums'],
   },
 });

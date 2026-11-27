@@ -17,7 +17,8 @@
  */
 
 import React from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { radius, spacing } from '../../theme/typography';
 import { ThemedText } from '../ui/ThemedText';
@@ -54,26 +55,35 @@ export function FeedbackPanel({ question, result, onContinue }: FeedbackPanelPro
     ? `Partial credit: ${result.pointsEarned}/${result.pointsPossible}`
     : 'Incorrect';
 
+  const iconName = result.isCorrect
+    ? 'checkmark-circle-outline'
+    : isPartial
+    ? 'alert-circle-outline'
+    : 'close-circle-outline';
+
   return (
     <View
       style={[
         styles.container,
-        { backgroundColor: accentSoft, borderLeftColor: accentColor },
+        { backgroundColor: accentSoft, borderColor: accentColor },
       ]}
     >
       <View style={styles.header}>
-        <ThemedText variant="h3" style={{ color: accentColor }}>
-          {statusLabel}
-        </ThemedText>
+        <View style={styles.statusRow}>
+          <Ionicons name={iconName} size={20} color={accentColor} />
+          <ThemedText variant="h3" style={{ color: accentColor }}>
+            {statusLabel}
+          </ThemedText>
+        </View>
         {!result.isCorrect && (
-          <ThemedText variant="caption" muted>
+          <ThemedText variant="caption" muted style={styles.tabular}>
             {result.pointsEarned}/{result.pointsPossible} points
           </ThemedText>
         )}
       </View>
 
       {/* Rationale */}
-      <View style={[styles.rationaleCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+      <View style={[styles.section, { borderTopColor: colors.border }]}>
         <ThemedText variant="label" muted>
           Rationale
         </ThemedText>
@@ -84,7 +94,7 @@ export function FeedbackPanel({ question, result, onContinue }: FeedbackPanelPro
 
       {/* Per-option explanations */}
       {question.options.some((o) => o.explanation) && (
-        <View style={styles.explanations}>
+        <View style={[styles.explanations, { borderTopColor: colors.border }]}>
           <ThemedText variant="label" muted>
             Option explanations
           </ThemedText>
@@ -129,23 +139,31 @@ export function FeedbackPanel({ question, result, onContinue }: FeedbackPanelPro
 const styles = StyleSheet.create({
   container: {
     padding: spacing.md,
-    borderLeftWidth: 4,
+    borderWidth: 1,
     borderRadius: radius.md,
     gap: spacing.md,
   },
   header: {
-    gap: spacing.xs,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  rationaleCard: {
-    padding: spacing.md,
-    borderWidth: 1,
-    borderRadius: radius.sm,
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.sm,
+  },
+  section: {
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    gap: spacing.xs,
   },
   rationale: {
     lineHeight: 24,
   },
   explanations: {
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
     gap: spacing.sm,
   },
   explanationRow: {
@@ -162,5 +180,8 @@ const styles = StyleSheet.create({
   explanationContent: {
     flex: 1,
     gap: 2,
+  },
+  tabular: {
+    fontVariant: ['tabular-nums'],
   },
 });

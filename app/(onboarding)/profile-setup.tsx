@@ -98,9 +98,6 @@ export default function ProfileSetupScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.header}>
-            <ThemedText variant="label" tone="primary">
-              STUDY PROFILE
-            </ThemedText>
             <ThemedText variant="h1">Personalize your NCLEX plan</ThemedText>
             <ThemedText variant="body" muted>
               We use these details to tailor your state licensure checklist and daily study pace.

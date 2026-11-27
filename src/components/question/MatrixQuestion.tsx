@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
   },
   cell: {
     width: 80,
-    height: 40,
+    height: 48,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,

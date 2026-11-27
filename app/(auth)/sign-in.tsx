@@ -68,12 +68,9 @@ export default function SignInScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.header}>
-            <ThemedText variant="label" tone="primary">
-              BRIDGERN
-            </ThemedText>
-            <ThemedText variant="display">Calm, structured NCLEX-RN prep</ThemedText>
+            <ThemedText variant="display">BridgeRN</ThemedText>
             <ThemedText variant="body" muted>
-              Built for internationally educated nurses transitioning to US licensure.
+              Calm, structured NCLEX-RN prep for internationally educated nurses.
             </ThemedText>
           </View>
 
@@ -198,7 +195,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   linkTouch: {
-    minHeight: 44,
+    minHeight: 48,
+    minWidth: 48,
     justifyContent: 'center',
   },
 });

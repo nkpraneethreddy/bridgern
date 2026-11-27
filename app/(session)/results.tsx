@@ -18,6 +18,7 @@
 import React, { useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { radius, spacing } from '../../src/theme/typography';
 import { ThemedText } from '../../src/components/ui/ThemedText';
@@ -28,6 +29,7 @@ import { useSessionStore } from '../../src/stores/sessionStore';
 
 export default function ResultsScreen() {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const session = useSessionStore((s) => s.session);
   const cleanup = useSessionStore((s) => s.cleanup);
@@ -94,43 +96,16 @@ export default function ResultsScreen() {
   return (
     <ScrollView
       style={{ backgroundColor: colors.background }}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[
+        styles.content,
+        { paddingBottom: spacing.xl + insets.bottom },
+      ]}
     >
       <ThemedText variant="h2">Session complete</ThemedText>
 
-      {/* Key metrics row */}
-      <View style={styles.metricsRow}>
-        <Card style={styles.metricCard}>
-          <ThemedText variant="caption" muted>
-            Questions
-          </ThemedText>
-          <ThemedText variant="h2" style={styles.metricValue}>
-            {stats.totalQuestions}
-          </ThemedText>
-        </Card>
-        <Card style={styles.metricCard}>
-          <ThemedText variant="caption" muted>
-            Accuracy
-          </ThemedText>
-          <ThemedText variant="h2" style={styles.metricValue}>
-            {stats.accuracy}%
-          </ThemedText>
-        </Card>
-        <Card style={styles.metricCard}>
-          <ThemedText variant="caption" muted>
-            Avg time
-          </ThemedText>
-          <ThemedText variant="h2" style={styles.metricValue}>
-            {stats.avgTime}s
-          </ThemedText>
-        </Card>
-      </View>
-
-      {/* Readiness estimate */}
+      {/* Readiness estimate — primary visual moment */}
       <Card>
-        <ThemedText variant="label" tone="primary">
-          Readiness estimate
-        </ThemedText>
+        <ThemedText variant="h3">Readiness estimate</ThemedText>
         <View style={styles.readinessRow}>
           <View style={styles.readinessRange}>
             <View
@@ -169,19 +144,35 @@ export default function ResultsScreen() {
         </ThemedText>
       </Card>
 
-      {/* Session summary */}
+      {/* Single unified session breakdown */}
       <Card>
-        <ThemedText variant="label" muted>
-          Session summary
-        </ThemedText>
-        <View style={styles.summaryRow}>
-          <ThemedText variant="body">Total time</ThemedText>
+        <ThemedText variant="h3">Session breakdown</ThemedText>
+        <View style={[styles.summaryRow, { borderBottomColor: colors.border }]}>
+          <ThemedText variant="body" muted>Questions answered</ThemedText>
+          <ThemedText variant="bodyMedium" style={styles.tabular}>
+            {stats.totalQuestions}
+          </ThemedText>
+        </View>
+        <View style={[styles.summaryRow, { borderBottomColor: colors.border }]}>
+          <ThemedText variant="body" muted>Accuracy</ThemedText>
+          <ThemedText variant="bodyMedium" style={styles.tabular}>
+            {stats.accuracy}%
+          </ThemedText>
+        </View>
+        <View style={[styles.summaryRow, { borderBottomColor: colors.border }]}>
+          <ThemedText variant="body" muted>Average pace</ThemedText>
+          <ThemedText variant="bodyMedium" style={styles.tabular}>
+            {stats.avgTime}s / item
+          </ThemedText>
+        </View>
+        <View style={[styles.summaryRow, { borderBottomColor: colors.border }]}>
+          <ThemedText variant="body" muted>Total time</ThemedText>
           <ThemedText variant="bodyMedium" style={styles.tabular}>
             {stats.totalTime}
           </ThemedText>
         </View>
-        <View style={styles.summaryRow}>
-          <ThemedText variant="body">Points earned</ThemedText>
+        <View style={styles.summaryRowLast}>
+          <ThemedText variant="body" muted>Points earned</ThemedText>
           <ThemedText variant="bodyMedium" style={styles.tabular}>
             {stats.totalPointsEarned}/{stats.totalPointsPossible}
           </ThemedText>
@@ -211,19 +202,6 @@ const styles = StyleSheet.create({
   content: {
     padding: spacing.md,
     gap: spacing.md,
-    paddingBottom: spacing.xl,
-  },
-  metricsRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  metricCard: {
-    flex: 1,
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  metricValue: {
-    fontVariant: ['tabular-nums'],
   },
   readinessRow: {
     marginTop: spacing.sm,
@@ -250,13 +228,19 @@ const styles = StyleSheet.create({
   },
   disclaimer: {
     marginTop: spacing.sm,
-    fontStyle: 'normal',
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: spacing.xs,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+  },
+  summaryRowLast: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: spacing.sm,
   },
   tabular: {
     fontVariant: ['tabular-nums'],

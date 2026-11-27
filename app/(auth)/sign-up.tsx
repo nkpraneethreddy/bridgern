@@ -86,10 +86,7 @@ export default function SignUpScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.header}>
-            <ThemedText variant="label" tone="primary">
-              CREATE ACCOUNT
-            </ThemedText>
-            <ThemedText variant="h1">Start your NCLEX-RN pathway</ThemedText>
+            <ThemedText variant="h1">Create your BridgeRN account</ThemedText>
             <ThemedText variant="body" muted>
               We collect only the study profile details needed to tailor your schedule.
             </ThemedText>
@@ -193,7 +190,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   linkTouch: {
-    minHeight: 44,
+    minHeight: 48,
+    minWidth: 48,
     justifyContent: 'center',
   },
 });

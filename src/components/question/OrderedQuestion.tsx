@@ -11,6 +11,7 @@
 
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { radius, spacing } from '../../theme/typography';
 import { ThemedText } from '../ui/ThemedText';
@@ -106,19 +107,19 @@ export function OrderedQuestion({ question, onSubmit, feedback, disabled }: Prop
                   <Pressable
                     onPress={() => moveUp(index)}
                     disabled={index === 0}
+                    accessibilityRole="button"
                     accessibilityLabel={`Move ${opt.label} up`}
                     style={[
                       styles.arrowButton,
                       { borderColor: colors.border, opacity: index === 0 ? 0.3 : 1 },
                     ]}
                   >
-                    <ThemedText variant="caption" muted>
-                      ▲
-                    </ThemedText>
+                    <Ionicons name="chevron-up" size={18} color={colors.textMuted} />
                   </Pressable>
                   <Pressable
                     onPress={() => moveDown(index)}
                     disabled={index >= items.length - 1}
+                    accessibilityRole="button"
                     accessibilityLabel={`Move ${opt.label} down`}
                     style={[
                       styles.arrowButton,
@@ -128,9 +129,7 @@ export function OrderedQuestion({ question, onSubmit, feedback, disabled }: Prop
                       },
                     ]}
                   >
-                    <ThemedText variant="caption" muted>
-                      ▼
-                    </ThemedText>
+                    <Ionicons name="chevron-down" size={18} color={colors.textMuted} />
                   </Pressable>
                 </View>
               )}
@@ -178,14 +177,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   arrows: {
-    gap: 2,
+    flexDirection: 'row',
+    gap: spacing.xs,
   },
   arrowButton: {
-    width: 28,
-    height: 24,
+    width: 48,
+    height: 48,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderRadius: 4,
+    borderRadius: radius.sm,
   },
 });

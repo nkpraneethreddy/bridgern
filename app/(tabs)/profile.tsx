@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
   },
   themeChip: {
     flex: 1,
-    minHeight: 44,
+    minHeight: 48,
     borderWidth: 1,
     borderRadius: radius.md,
     alignItems: 'center',

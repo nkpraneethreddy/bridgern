@@ -12,8 +12,9 @@
 
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeProvider';
-import { radius, spacing } from '../../theme/typography';
+import { spacing } from '../../theme/typography';
 import { ThemedText } from '../ui/ThemedText';
 import { Card } from '../ui/Card';
 import { QuestionRenderer } from './QuestionRenderer';
@@ -46,13 +47,13 @@ export function CaseStudyQuestion({ question, onSubmit, feedback, disabled }: Pr
   return (
     <View style={styles.container}>
       {/* Clinical scenario card */}
-      <Card
-        elevated
-        style={[styles.scenarioCard, { borderLeftColor: colors.primary, borderLeftWidth: 3 }]}
-      >
-        <ThemedText variant="label" tone="primary">
-          {stepLabel}
-        </ThemedText>
+      <Card elevated style={styles.scenarioCard}>
+        <View style={styles.stepHeader}>
+          <Ionicons name="document-text-outline" size={16} color={colors.primary} />
+          <ThemedText variant="label" tone="primary">
+            {stepLabel}
+          </ThemedText>
+        </View>
         {scenario ? (
           <ThemedText variant="body" style={styles.scenario}>
             {scenario}
@@ -77,6 +78,11 @@ const styles = StyleSheet.create({
   },
   scenarioCard: {
     gap: spacing.sm,
+  },
+  stepHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
   scenario: {
     lineHeight: 24,

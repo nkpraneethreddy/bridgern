@@ -208,7 +208,11 @@ export default function PracticeScreen() {
       </Card>
 
       <Button
-        title="Start session"
+        title={
+          mode === 'exam'
+            ? `Start ${questionCount}-question exam (${Math.round((questionCount * 90) / 60)} min)`
+            : `Start ${questionCount}-question tutor session`
+        }
         onPress={handleStart}
         accessibilityLabel={`Start ${mode} session with ${questionCount} questions`}
       />

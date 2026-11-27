@@ -14,14 +14,14 @@ export default function ProgressScreen() {
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={styles.content}
     >
-      <ThemedText variant="h2">Readiness & Analytics</ThemedText>
+      <ThemedText variant="h2">Readiness and analytics</ThemedText>
 
       <Card>
-        <ThemedText variant="label" tone="primary">
-          BASELINE READINESS RANGE
+        <ThemedText variant="label" muted>
+          Baseline readiness range
         </ThemedText>
         <ThemedText variant="h1" style={styles.rangeValue}>
-          Pending Diagnostic
+          Pending diagnostic
         </ThemedText>
         <ThemedText variant="caption" muted>
           Once you complete the 25-question diagnostic in Phase 3, you will see an
