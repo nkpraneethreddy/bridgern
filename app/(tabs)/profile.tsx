@@ -8,6 +8,8 @@ import { ThemedText } from '../../src/components/ui/ThemedText';
 import { deleteAccount, signOut } from '../../src/services/auth';
 import { useAuthStore } from '../../src/stores/authStore';
 import { ThemePreference, useThemeStore } from '../../src/stores/themeStore';
+import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
+import { PaywallModal } from '../../src/components/ui/PaywallModal';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { radius, spacing } from '../../src/theme/typography';
 
@@ -22,6 +24,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { user, profile } = useAuthStore();
   const { preference, setPreference } = useThemeStore();
+  const { status: subStatus, openPaywall } = useSubscriptionStore();
   const [busy, setBusy] = useState<'signout' | 'delete' | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -94,6 +97,25 @@ export default function ProfileScreen() {
           title="Edit Study Profile"
           variant="outline"
           onPress={() => router.push('/(onboarding)/profile-setup')}
+        />
+      </Card>
+
+      <Card style={styles.section}>
+        <ThemedText variant="h3">Subscription</ThemedText>
+        <View style={styles.metaList}>
+          <ThemedText variant="body">
+            Current Tier: {subStatus.tier.toUpperCase()}
+          </ThemedText>
+          <ThemedText variant="caption" muted>
+            {subStatus.isActive
+              ? `Active subscription · Renews monthly`
+              : 'Free tier — 40 diagnostic items & baseline analytics'}
+          </ThemedText>
+        </View>
+        <Button
+          title={subStatus.isActive ? 'Manage Subscription' : 'Upgrade to BridgeRN Pro'}
+          variant="outline"
+          onPress={openPaywall}
         />
       </Card>
 
@@ -180,6 +202,8 @@ export default function ProfileScreen() {
           disabled={busy !== null}
         />
       </View>
+
+      <PaywallModal />
     </ScrollView>
   );
 }

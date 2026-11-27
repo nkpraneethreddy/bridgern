@@ -7,6 +7,8 @@ import { useTheme } from '../../src/theme/ThemeProvider';
 import { radius, spacing } from '../../src/theme/typography';
 import { useSessionStore } from '../../src/stores/sessionStore';
 import { createPlaceholderPool } from '../../src/engine/placeholderPool';
+import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
+import { PaywallModal } from '../../src/components/ui/PaywallModal';
 import { OfflineBanner } from '../../src/components/ui/OfflineBanner';
 import type { SessionConfig } from '../../src/engine/types';
 
@@ -34,11 +36,18 @@ export default function PracticeScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const startSession = useSessionStore((s) => s.startSession);
+  const { isEntitledToLength, openPaywall } = useSubscriptionStore();
 
   const [mode, setMode] = useState<Mode>('tutor');
   const [selectedCount, setSelectedCount] = useState<number>(25);
 
   const handleLaunch = () => {
+    // Check if user is entitled to selected session length
+    if (!isEntitledToLength(selectedCount)) {
+      openPaywall();
+      return;
+    }
+
     const pool = createPlaceholderPool();
     const config: SessionConfig = {
       mode,
@@ -209,6 +218,9 @@ export default function PracticeScreen() {
           Pearson VUE Next Gen Format · Pearson-aligned Scoring
         </ThemedText>
       </View>
+
+      {/* Paywall Upgrade Modal */}
+      <PaywallModal />
     </ScrollView>
   );
 }
