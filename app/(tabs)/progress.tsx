@@ -1,5 +1,6 @@
 import React from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
 import { DisclaimerBanner } from '../../src/components/DisclaimerBanner';
 import { Card } from '../../src/components/ui/Card';
 import { ThemedText } from '../../src/components/ui/ThemedText';
@@ -8,6 +9,7 @@ import { spacing } from '../../src/theme/typography';
 
 export default function ProgressScreen() {
   const { colors } = useTheme();
+  const router = useRouter();
 
   return (
     <ScrollView
@@ -30,7 +32,10 @@ export default function ProgressScreen() {
         </ThemedText>
       </Card>
 
-      <DisclaimerBanner />
+      <DisclaimerBanner
+        onPressPrivacy={() => router.push('/(legal)/privacy')}
+        onPressTerms={() => router.push('/(legal)/terms')}
+      />
     </ScrollView>
   );
 }

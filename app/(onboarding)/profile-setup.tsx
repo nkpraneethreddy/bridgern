@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { DisclaimerBanner } from '../../src/components/DisclaimerBanner';
 import { Button } from '../../src/components/ui/Button';
@@ -32,6 +33,7 @@ import { radius, spacing } from '../../src/theme/typography';
 
 export default function ProfileSetupScreen() {
   const { colors } = useTheme();
+  const router = useRouter();
   const { user, profile, setProfile } = useAuthStore();
 
   const [fullName, setFullName] = useState(profile?.full_name ?? '');
@@ -159,7 +161,10 @@ export default function ProfileSetupScreen() {
             />
           </Card>
 
-          <DisclaimerBanner />
+          <DisclaimerBanner
+            onPressPrivacy={() => router.push('/(legal)/privacy')}
+            onPressTerms={() => router.push('/(legal)/terms')}
+          />
 
           <Pressable
             accessibilityRole="checkbox"

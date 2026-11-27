@@ -7,7 +7,7 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { DisclaimerBanner } from '../../src/components/DisclaimerBanner';
 import { Button } from '../../src/components/ui/Button';
@@ -20,6 +20,7 @@ import { spacing } from '../../src/theme/typography';
 
 export default function SignUpScreen() {
   const { colors } = useTheme();
+  const router = useRouter();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -165,7 +166,29 @@ export default function SignUpScreen() {
             </Link>
           </View>
 
-          <DisclaimerBanner compact />
+          <View style={styles.legalRow}>
+            <ThemedText variant="caption" muted>
+              By creating an account you agree to our{' '}
+            </ThemedText>
+            <Link href="/(legal)/terms" asChild>
+              <Pressable accessibilityRole="link" style={styles.linkTouch}>
+                <ThemedText variant="caption" tone="primary">Terms of Service</ThemedText>
+              </Pressable>
+            </Link>
+            <ThemedText variant="caption" muted>{' '}and{' '}</ThemedText>
+            <Link href="/(legal)/privacy" asChild>
+              <Pressable accessibilityRole="link" style={styles.linkTouch}>
+                <ThemedText variant="caption" tone="primary">Privacy Policy</ThemedText>
+              </Pressable>
+            </Link>
+            <ThemedText variant="caption" muted>.</ThemedText>
+          </View>
+
+          <DisclaimerBanner
+              compact
+              onPressPrivacy={() => router.push('/(legal)/privacy')}
+              onPressTerms={() => router.push('/(legal)/terms')}
+            />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -200,5 +223,12 @@ const styles = StyleSheet.create({
     minHeight: 48,
     minWidth: 48,
     justifyContent: 'center',
+  },
+  legalRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 2,
   },
 });

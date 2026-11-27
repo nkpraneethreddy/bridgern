@@ -98,6 +98,28 @@ export default function ProfileScreen() {
       </Card>
 
       <Card style={styles.section}>
+        <ThemedText variant="h3">Legal</ThemedText>
+        <Pressable
+          accessibilityRole="link"
+          accessibilityLabel="Open Privacy Policy"
+          onPress={() => router.push('/(legal)/privacy')}
+          style={styles.legalRow}
+        >
+          <ThemedText variant="body" tone="primary">Privacy Policy</ThemedText>
+          <ThemedText variant="caption" muted>›</ThemedText>
+        </Pressable>
+        <Pressable
+          accessibilityRole="link"
+          accessibilityLabel="Open Terms of Service"
+          onPress={() => router.push('/(legal)/terms')}
+          style={styles.legalRow}
+        >
+          <ThemedText variant="body" tone="primary">Terms of Service</ThemedText>
+          <ThemedText variant="caption" muted>›</ThemedText>
+        </Pressable>
+      </Card>
+
+      <Card style={styles.section}>
         <ThemedText variant="h3">Appearance</ThemedText>
         <View style={styles.themeRow}>
           {THEME_OPTIONS.map((option) => {
@@ -131,7 +153,10 @@ export default function ProfileScreen() {
         </View>
       </Card>
 
-      <DisclaimerBanner />
+      <DisclaimerBanner
+        onPressPrivacy={() => router.push('/(legal)/privacy')}
+        onPressTerms={() => router.push('/(legal)/terms')}
+      />
 
       {errorMsg ? (
         <ThemedText variant="caption" tone="danger" accessibilityRole="alert">
@@ -186,5 +211,12 @@ const styles = StyleSheet.create({
   },
   actions: {
     gap: spacing.sm,
+  },
+  legalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    minHeight: 48,
+    paddingVertical: 4,
   },
 });

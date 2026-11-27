@@ -7,7 +7,7 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { DisclaimerBanner } from '../../src/components/DisclaimerBanner';
 import { Button } from '../../src/components/ui/Button';
@@ -21,6 +21,7 @@ import { spacing } from '../../src/theme/typography';
 
 export default function SignInScreen() {
   const { colors } = useTheme();
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState<'email' | 'google' | null>(null);
@@ -158,7 +159,11 @@ export default function SignInScreen() {
             </Link>
           </View>
 
-          <DisclaimerBanner compact />
+          <DisclaimerBanner
+              compact
+              onPressPrivacy={() => router.push('/(legal)/privacy')}
+              onPressTerms={() => router.push('/(legal)/terms')}
+            />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
