@@ -7,6 +7,7 @@ import { useTheme } from '../../src/theme/ThemeProvider';
 import { radius, spacing } from '../../src/theme/typography';
 import { useSessionStore } from '../../src/stores/sessionStore';
 import { createPlaceholderPool } from '../../src/engine/placeholderPool';
+import { OfflineBanner } from '../../src/components/ui/OfflineBanner';
 import type { SessionConfig } from '../../src/engine/types';
 
 type Mode = 'tutor' | 'exam';
@@ -62,6 +63,9 @@ export default function PracticeScreen() {
         </ThemedText>
         <ThemedText variant="h1">Adaptive Practice</ThemedText>
       </View>
+
+      {/* Offline Status & Pending Sync Banner */}
+      <OfflineBanner />
 
       {/* Mode Switcher: Physical Segmented Control */}
       <View style={[styles.modeSegment, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>

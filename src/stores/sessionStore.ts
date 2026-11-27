@@ -8,6 +8,8 @@
 import { create } from 'zustand';
 import { SessionManager, SessionState } from '../engine/sessionManager';
 import type { QuestionResponse, QuestionWithOptions, ScoreResult, SessionConfig } from '../engine/types';
+import { offlineStorage } from '../services/offlineStorage';
+import { useOfflineStore } from './offlineStore';
 
 interface SessionStoreState {
   /** The underlying session manager (null when no session active) */
@@ -73,8 +75,26 @@ export const useSessionStore = create<SessionStoreState>((set, get) => ({
     const mgr = get().manager;
     if (!mgr) return null;
 
+    const currentQ = mgr.getState().currentQuestion;
     const result = mgr.submitAnswer(response);
     const state = mgr.getState();
+
+    // If offline or offline storage active, enqueue answer for sync
+    if (result && currentQ) {
+      offlineStorage.enqueueAnswer({
+        userId: 'anonymous-learner',
+        sessionId: 'local-session',
+        questionId: currentQ.id,
+        response,
+        score: {
+          pointsEarned: result.pointsEarned,
+          pointsPossible: result.pointsPossible,
+          isCorrect: result.isCorrect,
+        },
+        timeSpentSeconds: 45,
+      });
+      useOfflineStore.getState().updatePendingCount();
+    }
 
     if (state.config.mode === 'tutor' && result && !state.isComplete) {
       // Tutor mode: show feedback before advancing
