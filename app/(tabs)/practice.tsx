@@ -18,9 +18,9 @@ type Mode = 'tutor' | 'exam';
 
 const PRESETS = [
   { count: 10, label: 'Quick Diagnostic', duration: '15 min' },
-  { count: 25, label: 'Standard CAT Block', duration: '38 min' },
-  { count: 75, label: 'NCLEX Minimum Length', duration: '1 hr 52 min' },
-  { count: 145, label: 'Full Adaptive Simulation', duration: '3 hr 38 min' },
+  { count: 25, label: 'Standard CAT Block', duration: '35 min' },
+  { count: 85, label: 'NGN Minimum Length', duration: '2 hr' },
+  { count: 150, label: 'Full NGN Simulation', duration: '4 hr' },
 ];
 
 const BLUEPRINT = [
@@ -44,9 +44,11 @@ export default function PracticeScreen() {
   const [mode, setMode] = useState<Mode>('tutor');
   const [selectedCount, setSelectedCount] = useState<number>(25);
 
-  const handleLaunch = () => {
-    // Check if user is entitled to selected session length
-    if (!isEntitledToLength(selectedCount)) {
+  const handleLaunch = (customCount?: number, categoryOverride?: string[]) => {
+    const countToUse = customCount ?? selectedCount;
+
+    // Check subscription entitlement
+    if (!isEntitledToLength(countToUse)) {
       openPaywall();
       return;
     }
@@ -54,9 +56,11 @@ export default function PracticeScreen() {
     const pool = createPlaceholderPool();
     const config: SessionConfig = {
       mode,
-      maxQuestions: selectedCount,
-      timeLimitSeconds: mode === 'exam' ? selectedCount * 90 : 0,
-      categoryFilter: isRetakeModeActive ? (pastReport?.weakCategories ?? []) : [],
+      maxQuestions: countToUse,
+      timeLimitSeconds: mode === 'exam' ? countToUse * 90 : 0,
+      categoryFilter:
+        categoryOverride ??
+        (isRetakeModeActive ? (pastReport?.weakCategories ?? []) : []),
       startingDifficulty: 3,
     };
     startSession(config, pool);
@@ -67,16 +71,20 @@ export default function PracticeScreen() {
     <ScrollView
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={styles.container}
+      showsVerticalScrollIndicator={false}
     >
-      {/* Clinician Header Strip */}
+      {/* Clinician Header */}
       <View style={styles.header}>
         <ThemedText variant="caption" muted style={styles.monoHeading}>
-          TEST WORKSTATION · CAT ENGINE v2.4
+          ADAPTIVE QUESTION WORKSTATION
         </ThemedText>
         <ThemedText variant="h1">Adaptive Practice</ThemedText>
+        <ThemedText variant="caption" muted>
+          Every question adapts to your ability level using Pearson VUE CAT algorithms.
+        </ThemedText>
       </View>
 
-      {/* Offline Status & Pending Sync Banner */}
+      {/* Offline Status */}
       <OfflineBanner />
 
       {/* Retake Mode CPR Remediation Banner */}
@@ -101,16 +109,19 @@ export default function PracticeScreen() {
             </ThemedText>
             <ThemedText variant="caption" muted style={styles.microText}>
               {isRetakeModeActive
-                ? `Remediating ${pastReport?.weakCategories.length ?? 0} weak CPR categories`
-                : 'Input your past Pearson VUE CPR ratings for targeted practice'}
+                ? `Remediating ${pastReport?.weakCategories.length ?? 0} deficit categories from your CPR`
+                : 'Input your Pearson VUE CPR results for automatic deficit targeting'}
             </ThemedText>
           </View>
         </View>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={isRetakeModeActive ? 'Edit CPR ratings' : 'Upload CPR'}
+          accessibilityLabel={isRetakeModeActive ? 'Edit CPR ratings' : 'Input CPR'}
           onPress={openRetakeModal}
-          style={[styles.retakeBtn, { borderColor: isRetakeModeActive ? colors.warning : colors.primary }]}
+          style={[
+            styles.retakeBtn,
+            { borderColor: isRetakeModeActive ? colors.warning : colors.primary },
+          ]}
         >
           <ThemedText variant="caption" tone={isRetakeModeActive ? 'warning' : 'primary'}>
             {isRetakeModeActive ? 'Edit CPR' : 'Input CPR'}
@@ -118,68 +129,55 @@ export default function PracticeScreen() {
         </Pressable>
       </View>
 
-      {/* Retake Autopsy Insight Box (When active) */}
+      {/* CPR Emergency Drill (Retake Mode 1-Tap Quick Action) */}
+      {isRetakeModeActive && pastReport && pastReport.weakCategories.length > 0 && (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Launch CPR Emergency Drill targeting below-passing categories"
+          onPress={() => handleLaunch(25, pastReport.weakCategories)}
+          style={[
+            styles.drillButton,
+            { backgroundColor: colors.surface, borderColor: colors.warning },
+          ]}
+        >
+          <View style={styles.drillButtonLeft}>
+            <Ionicons name="flash-outline" size={18} color={colors.warning} />
+            <View style={{ gap: 2, flex: 1 }}>
+              <ThemedText variant="label" tone="warning">
+                CPR Deficit Drill
+              </ThemedText>
+              <ThemedText variant="caption" muted style={styles.microText}>
+                25 rapid questions targeted strictly to your {pastReport.weakCategories.length} weak categories
+              </ThemedText>
+            </View>
+          </View>
+          <ThemedText variant="caption" tone="warning" style={styles.mono}>
+            Start Drill →
+          </ThemedText>
+        </Pressable>
+      )}
+
+      {/* Retake Autopsy Insight Tip (When active) */}
       {isRetakeModeActive && pastReport?.autopsyInsight && (
-        <View style={[styles.autopsyBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.autopsyBox,
+            { backgroundColor: colors.surfaceElevated, borderColor: colors.border },
+          ]}
+        >
           <View style={styles.autopsyHeader}>
-            <Ionicons name="analytics" size={16} color={colors.primary} />
+            <Ionicons name="bulb-outline" size={16} color={colors.primary} />
             <ThemedText variant="label" tone="primary">
-              {pastReport.autopsyInsight.title}
+              Clinical Strategy: {pastReport.autopsyInsight.title}
             </ThemedText>
           </View>
           <ThemedText variant="caption" muted style={{ lineHeight: 18 }}>
             {pastReport.autopsyInsight.summary}
           </ThemedText>
-          <View style={styles.prescribedActionList}>
-            <ThemedText variant="caption" style={styles.strategyLabel}>
-              Prescribed Strategy:
-            </ThemedText>
-            {pastReport.autopsyInsight.prescribedStrategy.map((strat, idx) => (
-              <ThemedText key={idx} variant="caption" muted>
-                • {strat}
-              </ThemedText>
-            ))}
-          </View>
         </View>
       )}
 
-      {/* CPR Emergency Drill (Retake mode: 1-tap deficit-only drill) */}
-      {isRetakeModeActive && pastReport && pastReport.weakCategories.length > 0 && (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Launch CPR Emergency Drill targeting below-passing categories"
-          onPress={() => {
-            const pool = createPlaceholderPool();
-            const config: SessionConfig = {
-              mode: 'tutor',
-              maxQuestions: 25,
-              timeLimitSeconds: 0,
-              categoryFilter: pastReport.weakCategories,
-              startingDifficulty: 2,
-            };
-            startSession(config, pool);
-            router.push('/(session)/question');
-          }}
-          style={[styles.drillButton, { backgroundColor: colors.warningSoft, borderColor: colors.warning }]}
-        >
-          <View style={styles.drillButtonLeft}>
-            <Ionicons name="medkit" size={16} color={colors.warning} />
-            <View style={{ gap: 2 }}>
-              <ThemedText variant="label" tone="warning">
-                CPR Emergency Drill
-              </ThemedText>
-              <ThemedText variant="caption" muted style={styles.microText}>
-                25-item rapid drill · {pastReport.weakCategories.length} deficit categories only
-              </ThemedText>
-            </View>
-          </View>
-          <ThemedText variant="caption" tone="warning" style={styles.mono}>
-            Launch →
-          </ThemedText>
-        </Pressable>
-      )}
-
-      {/* Mode Switcher: Physical Segmented Control */}
+      {/* Practice Mode Switcher */}
       <View style={[styles.modeSegment, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
         <Pressable
           accessibilityRole="button"
@@ -187,7 +185,10 @@ export default function PracticeScreen() {
           onPress={() => setMode('tutor')}
           style={[
             styles.segmentButton,
-            mode === 'tutor' && [styles.segmentActive, { backgroundColor: colors.surface, borderColor: colors.border }],
+            mode === 'tutor' && [
+              styles.segmentActive,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ],
           ]}
         >
           <Ionicons
@@ -195,12 +196,12 @@ export default function PracticeScreen() {
             size={16}
             color={mode === 'tutor' ? colors.primary : colors.textMuted}
           />
-          <View>
+          <View style={{ flex: 1 }}>
             <ThemedText variant="label" tone={mode === 'tutor' ? 'primary' : 'default'}>
               Tutor Mode
             </ThemedText>
             <ThemedText variant="caption" muted style={styles.microText}>
-              Instant clinical rationale & debrief
+              Immediate clinical rationales
             </ThemedText>
           </View>
         </Pressable>
@@ -211,7 +212,10 @@ export default function PracticeScreen() {
           onPress={() => setMode('exam')}
           style={[
             styles.segmentButton,
-            mode === 'exam' && [styles.segmentActive, { backgroundColor: colors.surface, borderColor: colors.border }],
+            mode === 'exam' && [
+              styles.segmentActive,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ],
           ]}
         >
           <Ionicons
@@ -219,56 +223,21 @@ export default function PracticeScreen() {
             size={16}
             color={mode === 'exam' ? colors.primary : colors.textMuted}
           />
-          <View>
+          <View style={{ flex: 1 }}>
             <ThemedText variant="label" tone={mode === 'exam' ? 'primary' : 'default'}>
               Exam (CAT)
             </ThemedText>
             <ThemedText variant="caption" muted style={styles.microText}>
-              Timed, zero feedback until completion
+              Timed, zero feedback until end
             </ThemedText>
           </View>
         </Pressable>
       </View>
 
-      {/* The One Craft Moment: Blueprint Distribution Strip */}
-      <View style={[styles.blueprintBlock, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <View style={styles.blueprintTitleRow}>
-          <ThemedText variant="label">Client Needs Blueprint</ThemedText>
-          <ThemedText variant="caption" tone="primary" style={styles.mono}>
-            100% Calibrated
-          </ThemedText>
-        </View>
-
-        {/* Proportional Segmented Strip */}
-        <View style={styles.stripTrack}>
-          {BLUEPRINT.map((b) => (
-            <View
-              key={b.name}
-              style={[
-                styles.stripSegment,
-                { width: `${b.weight}%`, backgroundColor: b.color },
-              ]}
-            />
-          ))}
-        </View>
-
-        {/* Blueprint Legend Grid */}
-        <View style={styles.legendGrid}>
-          {BLUEPRINT.slice(0, 4).map((b) => (
-            <View key={b.name} style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: b.color }]} />
-              <ThemedText variant="caption" muted style={styles.legendLabel}>
-                {b.name} ({b.weight}%)
-              </ThemedText>
-            </View>
-          ))}
-        </View>
-      </View>
-
-      {/* Session Length: Linear Selectors */}
+      {/* Session Length Selector */}
       <View style={styles.presetsSection}>
         <ThemedText variant="label" style={styles.sectionLabel}>
-          Session Target
+          Session Length
         </ThemedText>
         <View style={styles.presetsList}>
           {PRESETS.map((p) => {
@@ -288,8 +257,12 @@ export default function PracticeScreen() {
                 ]}
               >
                 <View style={styles.presetLeft}>
-                  <ThemedText variant="label" tone={isSelected ? 'primary' : 'default'} style={styles.presetCount}>
-                    {p.count} Items
+                  <ThemedText
+                    variant="label"
+                    tone={isSelected ? 'primary' : 'default'}
+                    style={styles.presetCount}
+                  >
+                    {p.count} Questions
                   </ThemedText>
                   <ThemedText variant="caption" muted>
                     {p.label}
@@ -308,24 +281,54 @@ export default function PracticeScreen() {
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Begin ${selectedCount} item ${mode} session`}
-        onPress={handleLaunch}
+        onPress={() => handleLaunch()}
         style={[styles.launchButton, { backgroundColor: colors.primary }]}
       >
         <ThemedText variant="label" style={{ color: colors.primaryText, fontSize: 16 }}>
-          Begin {selectedCount}-Item Session →
+          Begin {selectedCount}-Question {mode === 'tutor' ? 'Tutor' : 'CAT Exam'} →
         </ThemedText>
       </Pressable>
 
-      <View style={styles.footerNote}>
-        <ThemedText variant="caption" muted style={styles.miniMono}>
-          Pearson VUE Next Gen Format · Pearson-aligned Scoring
-        </ThemedText>
+      {/* Blueprint Distribution Strip */}
+      <View
+        style={[
+          styles.blueprintBlock,
+          { backgroundColor: colors.surface, borderColor: colors.border },
+        ]}
+      >
+        <View style={styles.blueprintTitleRow}>
+          <ThemedText variant="label">Client Needs Blueprint</ThemedText>
+          <ThemedText variant="caption" muted style={styles.miniMono}>
+            NCSBN TEST PLAN
+          </ThemedText>
+        </View>
+
+        <View style={styles.stripTrack}>
+          {BLUEPRINT.map((b) => (
+            <View
+              key={b.name}
+              style={[
+                styles.stripSegment,
+                { width: `${b.weight}%`, backgroundColor: b.color },
+              ]}
+            />
+          ))}
+        </View>
+
+        <View style={styles.legendGrid}>
+          {BLUEPRINT.map((b) => (
+            <View key={b.name} style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: b.color }]} />
+              <ThemedText variant="caption" muted style={styles.legendLabel}>
+                {b.name} ({b.weight}%)
+              </ThemedText>
+            </View>
+          ))}
+        </View>
       </View>
 
-      {/* Paywall Upgrade Modal */}
+      {/* Modals */}
       <PaywallModal />
-
-      {/* Retake Mode CPR Intake Modal */}
       <CPRIntakeModal />
     </ScrollView>
   );
@@ -352,32 +355,30 @@ const styles = StyleSheet.create({
   miniMono: {
     fontVariant: ['tabular-nums'],
     fontSize: 10,
+    letterSpacing: 0.5,
   },
   microText: {
     fontSize: 11,
     marginTop: 2,
   },
   modeSegment: {
+    flexDirection: 'row',
     borderRadius: radius.md,
     borderWidth: 1,
     padding: 3,
     gap: 3,
   },
   segmentButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing.sm,
     borderRadius: radius.sm,
-    gap: spacing.sm,
+    gap: spacing.xs,
     minHeight: 48,
   },
   segmentActive: {
     borderWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
   },
   blueprintBlock: {
     padding: spacing.md,
@@ -434,10 +435,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing.md,
-    paddingVertical: 14,
+    paddingVertical: 12,
     borderRadius: radius.md,
     borderWidth: 1,
-    minHeight: 52,
+    minHeight: 50,
   },
   presetLeft: {
     gap: 2,
@@ -446,15 +447,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   launchButton: {
-    height: 52,
+    height: 50,
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: spacing.xs,
-  },
-  footerNote: {
-    alignItems: 'center',
-    paddingVertical: spacing.xs,
   },
   retakeCard: {
     flexDirection: 'row',
@@ -463,7 +459,6 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
     borderRadius: radius.md,
     borderWidth: 1,
-    marginVertical: 4,
     gap: spacing.sm,
   },
   retakeLeft: {
@@ -475,44 +470,35 @@ const styles = StyleSheet.create({
   retakeBtn: {
     borderWidth: 1,
     paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
+    paddingVertical: 6,
     borderRadius: radius.sm,
+    minHeight: 32,
+    justifyContent: 'center',
+  },
+  drillButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    minHeight: 52,
+  },
+  drillButtonLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    flex: 1,
   },
   autopsyBox: {
     padding: spacing.md,
     borderRadius: radius.md,
     borderWidth: 1,
     gap: spacing.xs,
-    marginVertical: 4,
   },
   autopsyHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-  },
-  prescribedActionList: {
-    paddingTop: spacing.xs,
-    gap: 2,
-  },
-  strategyLabel: {
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  drillButton: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: spacing.sm,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    marginVertical: 4,
-    minHeight: 56,
-    paddingHorizontal: spacing.md,
-  },
-  drillButtonLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    flex: 1,
   },
 });

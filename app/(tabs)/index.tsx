@@ -6,6 +6,8 @@ import { Card } from '../../src/components/ui/Card';
 import { ThemedText } from '../../src/components/ui/ThemedText';
 import { useAuthStore } from '../../src/stores/authStore';
 import { useStudyPlanStore } from '../../src/stores/studyPlanStore';
+import { useStreakStore } from '../../src/stores/streakStore';
+import { useRetakeStore } from '../../src/stores/retakeStore';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { radius, spacing } from '../../src/theme/typography';
 
@@ -14,9 +16,13 @@ export default function HomeScreen() {
   const router = useRouter();
   const profile = useAuthStore((s) => s.profile);
   const { currentPlan, diagnosticCompleted } = useStudyPlanStore();
+  const { currentStreak } = useStreakStore();
+  const { isRetakeModeActive } = useRetakeStore();
 
   const daysRemaining = currentPlan?.daysRemaining ?? 48;
   const dailyTarget = currentPlan?.dailyQuestionGoal ?? 25;
+  const displayName = profile?.full_name ? profile.full_name : 'Nurse Candidate';
+  const targetState = profile?.target_state ?? 'NY-RN';
 
   return (
     <ScrollView
@@ -28,145 +34,166 @@ export default function HomeScreen() {
       <View style={styles.headerRow}>
         <View style={styles.greeting}>
           <ThemedText variant="caption" muted style={styles.monoLabel}>
-            IEN PATHWAY Â· {profile?.target_state ?? 'NY-RN'}
+            NCLEX-RN PREPARATION · {targetState}
           </ThemedText>
-          <ThemedText variant="h1">
-            {profile?.full_name ? profile.full_name : 'Maria Santos, BSN'}
-          </ThemedText>
+          <ThemedText variant="h1">{displayName}</ThemedText>
         </View>
-        <View style={[styles.avatarBadge, { backgroundColor: colors.primarySoft, borderColor: colors.primary }]}>
-          <ThemedText variant="label" tone="primary" style={styles.avatarText}>
-            RN
-          </ThemedText>
-        </View>
-      </View>
-
-      {/* The One Craft Moment: Licensure Trajectory HUD */}
-      <Card style={styles.hudCard}>
-        <View style={styles.hudHeader}>
-          <ThemedText variant="caption" muted style={styles.monoLabel}>
-            EXAM RUNWAY
-          </ThemedText>
-          <View style={[styles.pill, { backgroundColor: colors.primarySoft }]}>
-            <ThemedText variant="caption" tone="primary" style={styles.mono}>
-              T-{daysRemaining} Days
-            </ThemedText>
-          </View>
-        </View>
-
-        {/* Milestone Steps */}
-        <View style={styles.milestoneGrid}>
-          <View style={[styles.milestoneItem, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
-            <ThemedText variant="caption" muted style={styles.miniMono}>CGFNS</ThemedText>
-            <ThemedText variant="caption" tone="success" style={styles.milestoneStatus}>Done</ThemedText>
-          </View>
-          <View style={[styles.milestoneItem, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
-            <ThemedText variant="caption" muted style={styles.miniMono}>BOARD</ThemedText>
-            <ThemedText variant="caption" tone="success" style={styles.milestoneStatus}>Done</ThemedText>
-          </View>
-          <View style={[styles.milestoneItem, { backgroundColor: colors.primarySoft, borderColor: colors.primary }]}>
-            <ThemedText variant="caption" tone="primary" style={styles.miniMono}>ATT</ThemedText>
-            <ThemedText variant="caption" tone="primary" style={styles.milestoneStatus}>Active</ThemedText>
-          </View>
+        {currentStreak > 0 && (
           <View
             style={[
-              styles.milestoneItem,
-              diagnosticCompleted
-                ? { backgroundColor: colors.successSoft, borderColor: colors.success }
-                : styles.milestonePending,
-              { backgroundColor: diagnosticCompleted ? colors.successSoft : colors.surfaceElevated, borderColor: colors.border },
+              styles.streakBadge,
+              { backgroundColor: colors.warningSoft, borderColor: colors.warning },
             ]}
           >
-            <ThemedText variant="caption" muted style={styles.miniMono}>NCLEX</ThemedText>
-            <ThemedText
-              variant="caption"
-              tone={diagnosticCompleted ? 'success' : 'default'}
-              style={styles.milestoneStatus}
-            >
-              {diagnosticCompleted ? 'Calibrated' : 'Scheduled'}
+            <Ionicons name="flame" size={14} color={colors.warning} />
+            <ThemedText variant="caption" tone="warning" style={styles.streakText}>
+              {currentStreak}d streak
             </ThemedText>
           </View>
-        </View>
+        )}
+      </View>
 
-        <View style={[styles.hudFooter, { borderTopColor: colors.border }]}>
-          <ThemedText variant="caption" muted>
-            Target: {profile?.weekly_study_hours ?? 15}h/wk
+      {/* Retake Mode Status Notice (if active) */}
+      {isRetakeModeActive && (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push('/(tabs)/progress')}
+          style={[
+            styles.retakeNotice,
+            { backgroundColor: colors.warningSoft, borderColor: colors.warning },
+          ]}
+        >
+          <Ionicons name="medical" size={16} color={colors.warning} />
+          <View style={{ flex: 1, gap: 2 }}>
+            <ThemedText variant="label" tone="warning">
+              Retake Remediation Active
+            </ThemedText>
+            <ThemedText variant="caption" muted>
+              Study plan tuned to your Pearson VUE deficit areas.
+            </ThemedText>
+          </View>
+          <ThemedText variant="caption" tone="warning" style={styles.mono}>
+            View Plan →
           </ThemedText>
-          <ThemedText variant="caption" tone="primary" style={styles.mono}>
-            Prescribed: {dailyTarget} items/day
-          </ThemedText>
-        </View>
-      </Card>
+        </Pressable>
+      )}
 
-      {/* Primary Action Card: Diagnostic or Adaptive Practice */}
+      {/* Primary Action Card: Next Clear Step for the Learner */}
       <Card elevated style={styles.actionCard}>
         <View style={styles.actionHeader}>
           <View style={styles.actionTextGroup}>
-            <ThemedText variant="h3">
-              {diagnosticCompleted ? 'Resume Targeted Adaptive CAT' : '25-Item CAT Diagnostic'}
+            <ThemedText variant="label" tone="primary" style={styles.miniMono}>
+              {diagnosticCompleted ? "TODAY'S STUDY GOAL" : 'STEP 1: BASELINE'}
             </ThemedText>
-            <ThemedText variant="caption" muted>
+            <ThemedText variant="h2">
+              {diagnosticCompleted ? 'Adaptive Practice Block' : 'Diagnostic Assessment'}
+            </ThemedText>
+            <ThemedText variant="body" muted style={styles.actionSubtitle}>
               {diagnosticCompleted
-                ? `Focus today: ${currentPlan?.focusCategories[0] ?? 'Pharmacological Therapies'}`
-                : 'Calibrate baseline accuracy across Client Needs categories.'}
-            </ThemedText>
-          </View>
-          <View
-            style={[
-              styles.tag,
-              { backgroundColor: diagnosticCompleted ? colors.successSoft : colors.warningSoft },
-            ]}
-          >
-            <ThemedText
-              variant="caption"
-              tone={diagnosticCompleted ? 'success' : 'warning'}
-              style={styles.miniMono}
-            >
-              {diagnosticCompleted ? 'ACTIVE PLAN' : 'HIGH YIELD'}
+                ? `Focus: ${currentPlan?.focusCategories[0] ?? 'Pharmacological Therapies'} · ${dailyTarget} questions`
+                : 'Complete 25 questions to gauge your baseline ability across the 8 Client Needs categories.'}
             </ThemedText>
           </View>
         </View>
 
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={diagnosticCompleted ? 'Launch adaptive practice' : 'Start calibration diagnostic'}
+          accessibilityLabel={
+            diagnosticCompleted ? 'Start adaptive practice' : 'Start baseline diagnostic'
+          }
           onPress={() => router.push('/(tabs)/practice')}
           style={[styles.primaryButton, { backgroundColor: colors.primary }]}
         >
-          <ThemedText variant="label" style={{ color: colors.primaryText }}>
-            {diagnosticCompleted ? 'Continue Daily Block â†’' : 'Begin Calibration â†’'}
+          <ThemedText variant="label" style={{ color: colors.primaryText, fontSize: 16 }}>
+            {diagnosticCompleted ? 'Start Daily Practice →' : 'Begin Assessment (25 Items) →'}
           </ThemedText>
         </Pressable>
       </Card>
 
-      {/* Trajectory Analytics Preview Card */}
-      <Card
-        style={[styles.analyticsCard, { borderColor: colors.border }]}
-      >
+      {/* Overview Metric HUD */}
+      <Card style={styles.hudCard}>
+        <ThemedText variant="label" style={styles.sectionHeading}>
+          Study Runway & Milestones
+        </ThemedText>
+
+        <View style={styles.metricRow}>
+          <View style={styles.metricItem}>
+            <ThemedText variant="caption" muted style={styles.miniMono}>
+              EXAM COUNTDOWN
+            </ThemedText>
+            <ThemedText variant="h2" style={styles.mono}>
+              {daysRemaining}
+            </ThemedText>
+            <ThemedText variant="caption" muted>
+              days remaining
+            </ThemedText>
+          </View>
+
+          <View style={[styles.metricDivider, { backgroundColor: colors.border }]} />
+
+          <View style={styles.metricItem}>
+            <ThemedText variant="caption" muted style={styles.miniMono}>
+              DAILY TARGET
+            </ThemedText>
+            <ThemedText variant="h2" style={styles.mono}>
+              {dailyTarget}
+            </ThemedText>
+            <ThemedText variant="caption" muted>
+              items / day
+            </ThemedText>
+          </View>
+
+          <View style={[styles.metricDivider, { backgroundColor: colors.border }]} />
+
+          <View style={styles.metricItem}>
+            <ThemedText variant="caption" muted style={styles.miniMono}>
+              STATUS
+            </ThemedText>
+            <ThemedText
+              variant="h3"
+              style={[
+                styles.mono,
+                { color: diagnosticCompleted ? colors.success : colors.warning },
+              ]}
+            >
+              {diagnosticCompleted ? 'Calibrated' : 'Pending'}
+            </ThemedText>
+            <ThemedText variant="caption" muted>
+              {diagnosticCompleted ? 'plan active' : 'needs test'}
+            </ThemedText>
+          </View>
+        </View>
+      </Card>
+
+      {/* Trajectory Analytics Link Card */}
+      <Card style={[styles.analyticsCard, { borderColor: colors.border }]}>
         <View style={styles.analyticsHeader}>
-          <ThemedText variant="label">Candidate Performance Report</ThemedText>
+          <View style={{ gap: 2, flex: 1 }}>
+            <ThemedText variant="label">Candidate Performance Report</ThemedText>
+            <ThemedText variant="caption" muted>
+              {diagnosticCompleted
+                ? 'Your readiness trajectory is tracked against the 65% passing standard.'
+                : 'Take the diagnostic to unlock your 8-category accuracy breakdown.'}
+            </ThemedText>
+          </View>
           <Pressable
             accessibilityRole="link"
-            accessibilityLabel="View full CPR analytics"
+            accessibilityLabel="View full analytics report"
             onPress={() => router.push('/(tabs)/progress')}
+            style={styles.analyticsLink}
           >
-            <ThemedText variant="caption" tone="primary">
-              View Detailed Analytics â†’
+            <ThemedText variant="caption" tone="primary" style={styles.mono}>
+              View Analytics →
             </ThemedText>
           </Pressable>
         </View>
-        <ThemedText variant="caption" muted>
-          {diagnosticCompleted
-            ? 'Your readiness curve is calibrated against Pearson VUE passing cutoffs across all 8 Client Needs areas.'
-            : 'Diagnostic not completed yet. Take the 25-item baseline to unlock category accuracy.'}
-        </ThemedText>
       </Card>
 
-      {/* Subtle Micro-footer */}
+      {/* Clean Footer Note */}
       <View style={styles.footerNote}>
         <Ionicons name="shield-checkmark-outline" size={14} color={colors.textMuted} />
         <ThemedText variant="caption" muted style={styles.miniMono}>
-          Pearson VUE Next Gen Format Â· Pearson-aligned Scoring
+          Pearson VUE Next Generation NCLEX (NGN) Aligned
         </ThemedText>
       </View>
     </ScrollView>
@@ -177,6 +204,7 @@ const styles = StyleSheet.create({
   content: {
     padding: spacing.md,
     gap: spacing.md,
+    paddingBottom: spacing.xl,
   },
   headerRow: {
     flexDirection: 'row',
@@ -186,35 +214,72 @@ const styles = StyleSheet.create({
   },
   greeting: {
     gap: 2,
+    flex: 1,
   },
   monoLabel: {
     fontVariant: ['tabular-nums'],
     letterSpacing: 0.5,
   },
-  avatarBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  streakBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: radius.full,
     borderWidth: 1,
+  },
+  streakText: {
+    fontWeight: '700',
+    fontSize: 12,
+  },
+  retakeNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    padding: spacing.sm,
+    borderRadius: radius.md,
+    borderWidth: 1,
+  },
+  actionCard: {
+    padding: spacing.md,
+    gap: spacing.md,
+  },
+  actionHeader: {
+    gap: spacing.xs,
+  },
+  actionTextGroup: {
+    gap: 4,
+  },
+  actionSubtitle: {
+    lineHeight: 20,
+    marginTop: 2,
+  },
+  primaryButton: {
+    height: 50,
+    borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: {
-    fontWeight: '700',
-  },
   hudCard: {
-    gap: spacing.sm,
     padding: spacing.md,
+    gap: spacing.md,
   },
-  hudHeader: {
+  sectionHeading: {
+    fontWeight: '600',
+  },
+  metricRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
     alignItems: 'center',
   },
-  pill: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: radius.sm,
+  metricItem: {
+    alignItems: 'center',
+    gap: 2,
+  },
+  metricDivider: {
+    width: 1,
+    height: 40,
   },
   mono: {
     fontVariant: ['tabular-nums'],
@@ -223,57 +288,7 @@ const styles = StyleSheet.create({
   miniMono: {
     fontVariant: ['tabular-nums'],
     fontSize: 10,
-    fontWeight: '700',
-  },
-  milestoneGrid: {
-    flexDirection: 'row',
-    gap: spacing.xs,
-  },
-  milestoneItem: {
-    flex: 1,
-    paddingVertical: spacing.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.md,
-    borderWidth: 1,
-    gap: 2,
-  },
-  milestonePending: {
-    opacity: 0.5,
-  },
-  milestoneStatus: {
-    fontWeight: '700',
-    fontSize: 12,
-  },
-  hudFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingTop: spacing.sm,
-    borderTopWidth: 1,
-  },
-  actionCard: {
-    padding: spacing.md,
-    gap: spacing.md,
-  },
-  actionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  actionTextGroup: {
-    flex: 1,
-    gap: 2,
-  },
-  tag: {
-    paddingHorizontal: spacing.xs,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  primaryButton: {
-    height: 48,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
+    letterSpacing: 0.5,
   },
   analyticsCard: {
     padding: spacing.md,
@@ -283,12 +298,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: spacing.sm,
+  },
+  analyticsLink: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
   },
   footerNote: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.xs,
-    marginTop: spacing.sm,
+    marginTop: spacing.xs,
   },
 });

@@ -27,7 +27,13 @@ export default function ProgressScreen() {
   const router = useRouter();
   const { currentPlan, diagnosticCompleted, categoryBreakdowns } = useStudyPlanStore();
   const { isRetakeModeActive, pastReport } = useRetakeStore();
-  const { currentStreak, longestStreak, totalDaysPracticed, milestoneReached, dismissMilestone } = useStreakStore();
+  const {
+    currentStreak,
+    longestStreak,
+    totalDaysPracticed,
+    milestoneReached,
+    dismissMilestone,
+  } = useStreakStore();
 
   return (
     <ScrollView
@@ -38,18 +44,21 @@ export default function ProgressScreen() {
       {/* Clinician Header */}
       <View style={styles.header}>
         <ThemedText variant="caption" muted style={styles.monoHeading}>
-          CANDIDATE PERFORMANCE REPORT (CPR) Â· ANALYTICS
+          CANDIDATE PERFORMANCE REPORT · ANALYTICS
         </ThemedText>
         <ThemedText variant="h1">Readiness & Trajectory</ThemedText>
+        <ThemedText variant="caption" muted>
+          Calibrated against the Pearson VUE 65% NCLEX-RN passing standard.
+        </ThemedText>
       </View>
 
       {/* Primary Readiness Card */}
       <Card style={styles.mainCard}>
         <View style={styles.cardHeaderRow}>
-          <View>
-            <ThemedText variant="label">Baseline Readiness Interval</ThemedText>
+          <View style={{ gap: 2, flex: 1 }}>
+            <ThemedText variant="label">Estimated Readiness Index</ThemedText>
             <ThemedText variant="caption" muted>
-              95% Wilson confidence score vs. 65% NCLEX standard
+              Adaptive confidence estimate vs. passing benchmark
             </ThemedText>
           </View>
           <View
@@ -70,7 +79,7 @@ export default function ProgressScreen() {
           </View>
         </View>
 
-        {/* Visual Passing Meter */}
+        {/* Passing Standard Visual Meter */}
         <View style={styles.meterContainer}>
           <View style={[styles.meterTrack, { backgroundColor: colors.surfaceElevated }]}>
             {/* Standard Pass Cutoff line at 65% */}
@@ -103,9 +112,14 @@ export default function ProgressScreen() {
         </View>
 
         {!diagnosticCompleted && (
-          <View style={[styles.actionBanner, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
+          <View
+            style={[
+              styles.actionBanner,
+              { backgroundColor: colors.surfaceElevated, borderColor: colors.border },
+            ]}
+          >
             <ThemedText variant="body">
-              Take the 25-item Diagnostic Exam to establish your baseline ability estimate.
+              Take the 25-question Diagnostic Exam to establish your baseline ability estimate.
             </ThemedText>
             <Pressable
               accessibilityRole="button"
@@ -114,18 +128,22 @@ export default function ProgressScreen() {
               style={[styles.smallBtn, { backgroundColor: colors.primary }]}
             >
               <ThemedText variant="label" style={{ color: colors.primaryText }}>
-                Start Diagnostic â†’
+                Start Diagnostic Assessment →
               </ThemedText>
             </Pressable>
           </View>
         )}
       </Card>
 
-      {/* Study Streak Card */}
+      {/* Study Practice Streak */}
       <Card style={styles.streakCard}>
         <View style={styles.streakHeader}>
-          <Ionicons name="flame-outline" size={18} color={currentStreak >= 3 ? colors.warning : colors.textMuted} />
-          <ThemedText variant="h3">Practice Streak</ThemedText>
+          <Ionicons
+            name="flame"
+            size={18}
+            color={currentStreak >= 3 ? colors.warning : colors.textMuted}
+          />
+          <ThemedText variant="h3">Study Consistency</ThemedText>
           {milestoneReached && (
             <Pressable
               onPress={dismissMilestone}
@@ -143,16 +161,29 @@ export default function ProgressScreen() {
         <View style={styles.streakStats}>
           <View style={styles.streakStat}>
             <ThemedText variant="caption" muted style={styles.streakStatLabel}>
-              CURRENT
+              CURRENT STREAK
             </ThemedText>
-            <ThemedText variant="h2" style={[styles.mono, { color: currentStreak >= 7 ? colors.success : currentStreak >= 3 ? colors.warning : colors.text }]}>
+            <ThemedText
+              variant="h2"
+              style={[
+                styles.mono,
+                {
+                  color:
+                    currentStreak >= 7
+                      ? colors.success
+                      : currentStreak >= 3
+                      ? colors.warning
+                      : colors.text,
+                },
+              ]}
+            >
               {currentStreak}d
             </ThemedText>
           </View>
           <View style={[styles.streakDivider, { backgroundColor: colors.border }]} />
           <View style={styles.streakStat}>
             <ThemedText variant="caption" muted style={styles.streakStatLabel}>
-              PERSONAL BEST
+              BEST STREAK
             </ThemedText>
             <ThemedText variant="h2" style={styles.mono}>
               {longestStreak}d
@@ -169,24 +200,33 @@ export default function ProgressScreen() {
           </View>
         </View>
 
-        {/* Milestone progress dots */}
+        {/* Milestone Progression Track */}
         <View style={styles.milestoneDots}>
           {([3, 7, 14, 30, 45] as const).map((m) => (
             <View key={m} style={styles.dotGroup}>
-              <View style={[
-                styles.dot,
-                { backgroundColor: currentStreak >= m ? colors.success : colors.surfaceElevated, borderColor: currentStreak >= m ? colors.success : colors.border },
-              ]} />
-              <ThemedText variant="caption" muted style={styles.dotLabel}>{m}d</ThemedText>
+              <View
+                style={[
+                  styles.dot,
+                  {
+                    backgroundColor:
+                      currentStreak >= m ? colors.success : colors.surfaceElevated,
+                    borderColor: currentStreak >= m ? colors.success : colors.border,
+                  },
+                ]}
+              />
+              <ThemedText variant="caption" muted style={styles.dotLabel}>
+                {m}d
+              </ThemedText>
             </View>
           ))}
         </View>
       </Card>
 
       {/* Client Needs Category Breakdown */}
-      <View style={styles.sectionHeader}>        <ThemedText variant="h3">Client Needs Performance</ThemedText>
+      <View style={styles.sectionHeader}>
+        <ThemedText variant="h3">Client Needs Performance</ThemedText>
         <ThemedText variant="caption" muted>
-          Accuracy vs. Pearson VUE passing cutoff
+          Accuracy by NCSBN Blueprint category vs. Pearson VUE passing cutoff
         </ThemedText>
       </View>
 
@@ -217,7 +257,7 @@ export default function ProgressScreen() {
                   </ThemedText>
                 </View>
                 <ThemedText variant="caption" tone={statusTone} style={styles.monoStatus}>
-                  {diagnosticCompleted ? statusLabel : 'Not Tested'}
+                  {diagnosticCompleted ? statusLabel : 'Pending'}
                 </ThemedText>
               </View>
 
@@ -247,122 +287,141 @@ export default function ProgressScreen() {
         })}
       </View>
 
-      {/* 45-Day Retake Roadmap Card (when retake mode active) */}
+      {/* Retake Mode Section: Rebound Meter & 45-Day Roadmap */}
       {isRetakeModeActive && pastReport && (
-        <Card style={styles.roadmapCard}>
-          <View style={styles.roadmapHeader}>
-            <Ionicons name="flag-outline" size={18} color={colors.warning} />
-            <ThemedText variant="h3">45-Day NCSBN Retake Roadmap</ThemedText>
-          </View>
-          <ThemedText variant="caption" muted>
-            NCSBN requires a mandatory 45-day waiting period between NCLEX attempts. Here is your
-            structured 3-phase remediation progression:
-          </ThemedText>
+        <>
+          <Card style={styles.reboundCard}>
+            <View style={styles.reboundHeader}>
+              <Ionicons name="trending-up-outline" size={18} color={colors.success} />
+              <ThemedText variant="h3">Rebound Recovery Trajectory</ThemedText>
+            </View>
+            <ThemedText variant="caption" muted>
+              Tracks ability growth from your past CPR baseline to current adaptive practice.
+            </ThemedText>
 
-          <View style={styles.phaseList}>
-            <View style={[styles.phaseTile, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
-              <ThemedText variant="label" tone="warning">
-                Phase 1: Days 1–14
-              </ThemedText>
-              <ThemedText variant="caption" muted>
-                Deficit Elimination: 30 items/day in Below-Passing areas ({pastReport.weakCategories[0] ?? 'Pharmacology'})
-              </ThemedText>
+            <View style={styles.meterContainer}>
+              <View style={[styles.reboundMeterTrack, { backgroundColor: colors.surfaceElevated }]}>
+                <View
+                  style={[
+                    styles.reboundBaselineMarker,
+                    { left: '40%', backgroundColor: colors.danger },
+                  ]}
+                />
+                <View
+                  style={[
+                    styles.reboundFill,
+                    {
+                      width: diagnosticCompleted ? '62%' : '40%',
+                      backgroundColor: colors.success,
+                    },
+                  ]}
+                />
+              </View>
+              <View style={styles.reboundScaleRow}>
+                <ThemedText variant="caption" muted style={styles.mono}>
+                  CPR Baseline (~40%)
+                </ThemedText>
+                <ThemedText variant="caption" tone="success" style={styles.mono}>
+                  {diagnosticCompleted ? '+22% rebound' : 'Diagnostic needed'}
+                </ThemedText>
+                <ThemedText variant="caption" muted style={styles.mono}>
+                  Passing Standard (65%)
+                </ThemedText>
+              </View>
             </View>
 
-            <View style={[styles.phaseTile, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
-              <ThemedText variant="label" tone="primary">
-                Phase 2: Days 15–30
-              </ThemedText>
-              <ThemedText variant="caption" muted>
-                Borderline Stabilization: 50 items/day across Near-Passing areas & NGN case studies
-              </ThemedText>
+            <View style={[styles.reboundDeltaRow, { borderTopColor: colors.border }]}>
+              <View style={styles.reboundStat}>
+                <ThemedText variant="caption" muted style={styles.reboundStatLabel}>
+                  PAST CPR
+                </ThemedText>
+                <ThemedText
+                  variant="h3"
+                  style={[styles.reboundStatValue, { color: colors.danger }]}
+                >
+                  ~40%
+                </ThemedText>
+              </View>
+              <View style={styles.reboundStat}>
+                <ThemedText variant="caption" muted style={styles.reboundStatLabel}>
+                  CURRENT LEVEL
+                </ThemedText>
+                <ThemedText
+                  variant="h3"
+                  style={[styles.reboundStatValue, { color: colors.success }]}
+                >
+                  {diagnosticCompleted ? '62%' : '—'}
+                </ThemedText>
+              </View>
+              <View style={styles.reboundStat}>
+                <ThemedText variant="caption" muted style={styles.reboundStatLabel}>
+                  MOMENTUM
+                </ThemedText>
+                <ThemedText
+                  variant="h3"
+                  style={[styles.reboundStatValue, { color: colors.primary }]}
+                >
+                  {diagnosticCompleted ? '↑ +22pp' : '—'}
+                </ThemedText>
+              </View>
             </View>
+          </Card>
 
-            <View style={[styles.phaseTile, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
-              <ThemedText variant="label" tone="success">
-                Phase 3: Days 31–45
-              </ThemedText>
-              <ThemedText variant="caption" muted>
-                Full Stamina Simulation: 85–150 item full CAT simulation blocks under timed conditions
-              </ThemedText>
+          <Card style={styles.roadmapCard}>
+            <View style={styles.roadmapHeader}>
+              <Ionicons name="flag-outline" size={18} color={colors.warning} />
+              <ThemedText variant="h3">45-Day NCSBN Retake Roadmap</ThemedText>
             </View>
-          </View>
-        </Card>
-      )}
+            <ThemedText variant="caption" muted>
+              NCSBN requires a 45-day waiting period between NCLEX attempts. Here is your
+              progression:
+            </ThemedText>
 
-      {/* Rebound Progress Meter (retake mode) */}
-      {isRetakeModeActive && pastReport && (
-        <Card style={styles.reboundCard}>
-          <View style={styles.reboundHeader}>
-            <Ionicons name="trending-up-outline" size={18} color={colors.success} />
-            <ThemedText variant="h3">Rebound Progress Meter</ThemedText>
-          </View>
-          <ThemedText variant="caption" muted>
-            Tracks improvement from your CPR baseline (failed attempt) to current adaptive practice performance.
-          </ThemedText>
-
-          {/* Rebound Bar */}
-          <View style={styles.meterContainer}>
-            <View style={[styles.reboundMeterTrack, { backgroundColor: colors.surfaceElevated }]}>
-              {/* Baseline marker at the CPR failure point (approximate 40% for below-passing) */}
+            <View style={styles.phaseList}>
               <View
                 style={[
-                  styles.reboundBaselineMarker,
-                  { left: '40%', backgroundColor: colors.danger },
+                  styles.phaseTile,
+                  { backgroundColor: colors.surfaceElevated, borderColor: colors.border },
                 ]}
-              />
-              {/* Current readiness fill — driven by diagnostic completion */}
+              >
+                <ThemedText variant="label" tone="warning">
+                  Phase 1: Days 1–14 · Deficit Repair
+                </ThemedText>
+                <ThemedText variant="caption" muted>
+                  30 questions/day in Below-Passing areas ({pastReport.weakCategories[0] ?? 'Pharmacology'})
+                </ThemedText>
+              </View>
+
               <View
                 style={[
-                  styles.reboundFill,
-                  {
-                    width: diagnosticCompleted ? '62%' : '40%',
-                    backgroundColor: colors.success,
-                  },
+                  styles.phaseTile,
+                  { backgroundColor: colors.surfaceElevated, borderColor: colors.border },
                 ]}
-              />
-            </View>
-            <View style={styles.reboundScaleRow}>
-              <ThemedText variant="caption" muted style={styles.mono}>
-                CPR Baseline
-              </ThemedText>
-              <ThemedText variant="caption" tone="success" style={styles.mono}>
-                {diagnosticCompleted ? '+22% rebound' : 'Practice to unlock'}
-              </ThemedText>
-              <ThemedText variant="caption" muted style={styles.mono}>
-                Pass Standard
-              </ThemedText>
-            </View>
-          </View>
+              >
+                <ThemedText variant="label" tone="primary">
+                  Phase 2: Days 15–30 · Stabilization
+                </ThemedText>
+                <ThemedText variant="caption" muted>
+                  50 questions/day across Near-Passing areas & NGN clinical judgment scenarios
+                </ThemedText>
+              </View>
 
-          {/* Delta Stats Row */}
-          <View style={[styles.reboundDeltaRow, { borderTopColor: colors.border }]}>
-            <View style={styles.reboundStat}>
-              <ThemedText variant="caption" muted style={styles.reboundStatLabel}>
-                BASELINE
-              </ThemedText>
-              <ThemedText variant="h3" style={[styles.reboundStatValue, { color: colors.danger }]}>
-                ~40%
-              </ThemedText>
+              <View
+                style={[
+                  styles.phaseTile,
+                  { backgroundColor: colors.surfaceElevated, borderColor: colors.border },
+                ]}
+              >
+                <ThemedText variant="label" tone="success">
+                  Phase 3: Days 31–45 · Simulation
+                </ThemedText>
+                <ThemedText variant="caption" muted>
+                  85–150 question full CAT mock exams under Pearson VUE timed conditions
+                </ThemedText>
+              </View>
             </View>
-            <View style={styles.reboundStat}>
-              <ThemedText variant="caption" muted style={styles.reboundStatLabel}>
-                CURRENT
-              </ThemedText>
-              <ThemedText variant="h3" style={[styles.reboundStatValue, { color: colors.success }]}>
-                {diagnosticCompleted ? '62%' : '—'}
-              </ThemedText>
-            </View>
-            <View style={styles.reboundStat}>
-              <ThemedText variant="caption" muted style={styles.reboundStatLabel}>
-                MOMENTUM
-              </ThemedText>
-              <ThemedText variant="h3" style={[styles.reboundStatValue, { color: colors.primary }]}>
-                {diagnosticCompleted ? '↑ +22pp' : '—'}
-              </ThemedText>
-            </View>
-          </View>
-        </Card>
+          </Card>
+        </>
       )}
 
       {/* Active Study Plan Block */}
@@ -370,10 +429,10 @@ export default function ProgressScreen() {
         <Card style={styles.studyPlanCard}>
           <View style={styles.studyPlanHeader}>
             <Ionicons name="calendar-outline" size={18} color={colors.primary} />
-            <ThemedText variant="h3">Personalized Study Prescription</ThemedText>
+            <ThemedText variant="h3">Prescribed Study Pace</ThemedText>
           </View>
 
-          <View style={styles.planStatsRow}>
+          <View style={[styles.planStatsRow, { borderBottomColor: colors.border }]}>
             <View style={styles.planStat}>
               <ThemedText variant="caption" muted style={styles.miniMono}>
                 DAILY TARGET
@@ -393,7 +452,7 @@ export default function ProgressScreen() {
           </View>
 
           <View style={styles.focusList}>
-            <ThemedText variant="label">Prescribed Priority Focus:</ThemedText>
+            <ThemedText variant="label">Prescribed Priority Categories:</ThemedText>
             {currentPlan.focusCategories.map((focus, idx) => (
               <ThemedText key={focus} variant="body" muted>
                 {idx + 1}. {focus}
@@ -507,7 +566,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   smallBtn: {
-    height: 40,
+    height: 44,
     borderRadius: radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
@@ -571,7 +630,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
     paddingBottom: spacing.sm,
   },
   planStat: {
@@ -582,7 +640,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
 
-  // ── Study Streak ──────────────────────────────────────────────────────────
+  // Study Streak
   streakCard: {
     padding: spacing.md,
     gap: spacing.md,
@@ -599,9 +657,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
   },
   milestoneTxt: {
-    fontVariant: ['tabular-nums' as const],
+    fontVariant: ['tabular-nums'],
     fontSize: 10,
-    fontWeight: '700' as const,
+    fontWeight: '700',
     letterSpacing: 0.5,
   },
   streakStats: {
@@ -614,7 +672,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   streakStatLabel: {
-    fontVariant: ['tabular-nums' as const],
+    fontVariant: ['tabular-nums'],
     fontSize: 10,
     letterSpacing: 0.5,
   },
@@ -641,7 +699,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
   },
 
-  // ── Retake Roadmap ────────────────────────────────────────────────────────
+  // Retake Roadmap
   roadmapCard: {
     padding: spacing.md,
     gap: spacing.md,
@@ -661,7 +719,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
 
-  // ── Rebound Progress Meter ─────────────────────────────────────────────────
+  // Rebound Progress Meter
   reboundCard: {
     padding: spacing.md,
     gap: spacing.md,
@@ -705,12 +763,12 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   reboundStatLabel: {
-    fontVariant: ['tabular-nums' as const],
+    fontVariant: ['tabular-nums'],
     fontSize: 10,
     letterSpacing: 0.5,
   },
   reboundStatValue: {
-    fontVariant: ['tabular-nums' as const],
-    fontWeight: '700' as const,
+    fontVariant: ['tabular-nums'],
+    fontWeight: '700',
   },
 });

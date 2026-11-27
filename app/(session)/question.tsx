@@ -87,12 +87,12 @@ export default function QuestionScreen() {
       <View style={[styles.telemetryBar, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
         <View style={styles.telemetryLeft}>
           <ThemedText variant="caption" tone="primary" style={styles.monoItem}>
-            ITEM {questionNumber.toString().padStart(2, '0')}
+            QUESTION {questionNumber.toString().padStart(2, '0')}
             {config.maxQuestions > 0 ? ` / ${config.maxQuestions}` : ''}
           </ThemedText>
           <ThemedText variant="caption" muted style={styles.monoDivider}>|</ThemedText>
           <ThemedText variant="caption" muted style={styles.monoItem}>
-            CAT θ: {session.currentAbility >= 0 ? `+${session.currentAbility.toFixed(1)}` : session.currentAbility.toFixed(1)}
+            DIFFICULTY: LEVEL {currentQuestion.difficulty}/5
           </ThemedText>
         </View>
 

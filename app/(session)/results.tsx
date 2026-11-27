@@ -110,18 +110,18 @@ export default function ResultsScreen() {
       {/* Clinician Header */}
       <View style={styles.header}>
         <ThemedText variant="caption" muted style={styles.monoHeading}>
-          CANDIDATE PERFORMANCE REPORT · CAT SIMULATION
+          SESSION COMPLETED · PERFORMANCE DEBRIEF
         </ThemedText>
-        <ThemedText variant="h1">Examination Results</ThemedText>
+        <ThemedText variant="h1">Session Results</ThemedText>
       </View>
 
       {/* The One Craft Moment: Wilson Score Ability Distribution Curve */}
       <Card style={styles.hudCard}>
         <View style={styles.hudTopRow}>
           <View>
-            <ThemedText variant="label">Readiness Confidence Interval</ThemedText>
+            <ThemedText variant="label">Estimated Exam Readiness</ThemedText>
             <ThemedText variant="caption" muted style={styles.microText}>
-              95% Wilson score estimate ({stats.totalQuestions} items sampled)
+              Projected passing probability ({stats.totalQuestions} questions sampled)
             </ThemedText>
           </View>
           <View style={[styles.statusTag, { backgroundColor: isPassing ? colors.successSoft : colors.primarySoft }]}>
@@ -168,7 +168,7 @@ export default function ResultsScreen() {
         <View style={[styles.hudFooter, { borderTopColor: colors.border }]}>
           <Ionicons name="information-circle-outline" size={14} color={colors.textMuted} />
           <ThemedText variant="caption" muted style={styles.hudFootnote}>
-            Confidence ranges widen with shorter sets; full CAT blocks narrow the bound.
+            Your estimated readiness range narrows as you complete more questions.
           </ThemedText>
         </View>
       </Card>
@@ -221,7 +221,7 @@ export default function ResultsScreen() {
           style={[styles.primaryBtn, { backgroundColor: colors.primary }]}
         >
           <ThemedText variant="label" style={{ color: colors.primaryText, fontSize: 16 }}>
-            Return to Test Workstation →
+            Return to Practice →
           </ThemedText>
         </Pressable>
       </View>
