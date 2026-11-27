@@ -8,7 +8,9 @@ import { radius, spacing } from '../../src/theme/typography';
 import { useSessionStore } from '../../src/stores/sessionStore';
 import { createPlaceholderPool } from '../../src/engine/placeholderPool';
 import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
+import { useRetakeStore } from '../../src/stores/retakeStore';
 import { PaywallModal } from '../../src/components/ui/PaywallModal';
+import { CPRIntakeModal } from '../../src/components/ui/CPRIntakeModal';
 import { OfflineBanner } from '../../src/components/ui/OfflineBanner';
 import type { SessionConfig } from '../../src/engine/types';
 
@@ -37,6 +39,7 @@ export default function PracticeScreen() {
   const router = useRouter();
   const startSession = useSessionStore((s) => s.startSession);
   const { isEntitledToLength, openPaywall } = useSubscriptionStore();
+  const { isRetakeModeActive, pastReport, openModal: openRetakeModal } = useRetakeStore();
 
   const [mode, setMode] = useState<Mode>('tutor');
   const [selectedCount, setSelectedCount] = useState<number>(25);
@@ -53,7 +56,7 @@ export default function PracticeScreen() {
       mode,
       maxQuestions: selectedCount,
       timeLimitSeconds: mode === 'exam' ? selectedCount * 90 : 0,
-      categoryFilter: [],
+      categoryFilter: isRetakeModeActive ? (pastReport?.weakCategories ?? []) : [],
       startingDifficulty: 3,
     };
     startSession(config, pool);
@@ -75,6 +78,45 @@ export default function PracticeScreen() {
 
       {/* Offline Status & Pending Sync Banner */}
       <OfflineBanner />
+
+      {/* Retake Mode CPR Remediation Banner */}
+      <View
+        style={[
+          styles.retakeCard,
+          {
+            backgroundColor: isRetakeModeActive ? colors.warningSoft : colors.surfaceElevated,
+            borderColor: isRetakeModeActive ? colors.warning : colors.border,
+          },
+        ]}
+      >
+        <View style={styles.retakeLeft}>
+          <Ionicons
+            name={isRetakeModeActive ? 'medkit' : 'document-text-outline'}
+            size={18}
+            color={isRetakeModeActive ? colors.warning : colors.textMuted}
+          />
+          <View style={{ flex: 1, gap: 2 }}>
+            <ThemedText variant="label" tone={isRetakeModeActive ? 'warning' : 'default'}>
+              {isRetakeModeActive ? 'Retake Mode Active' : 'Repeat NCLEX Candidate?'}
+            </ThemedText>
+            <ThemedText variant="caption" muted style={styles.microText}>
+              {isRetakeModeActive
+                ? `Remediating ${pastReport?.weakCategories.length ?? 0} weak CPR categories`
+                : 'Input your past Pearson VUE CPR ratings for targeted practice'}
+            </ThemedText>
+          </View>
+        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={isRetakeModeActive ? 'Edit CPR ratings' : 'Upload CPR'}
+          onPress={openRetakeModal}
+          style={[styles.retakeBtn, { borderColor: isRetakeModeActive ? colors.warning : colors.primary }]}
+        >
+          <ThemedText variant="caption" tone={isRetakeModeActive ? 'warning' : 'primary'}>
+            {isRetakeModeActive ? 'Edit CPR' : 'Input CPR'}
+          </ThemedText>
+        </Pressable>
+      </View>
 
       {/* Mode Switcher: Physical Segmented Control */}
       <View style={[styles.modeSegment, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
@@ -221,6 +263,9 @@ export default function PracticeScreen() {
 
       {/* Paywall Upgrade Modal */}
       <PaywallModal />
+
+      {/* Retake Mode CPR Intake Modal */}
+      <CPRIntakeModal />
     </ScrollView>
   );
 }
@@ -349,5 +394,27 @@ const styles = StyleSheet.create({
   footerNote: {
     alignItems: 'center',
     paddingVertical: spacing.xs,
+  },
+  retakeCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: spacing.sm,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    marginVertical: 4,
+    gap: spacing.sm,
+  },
+  retakeLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    flex: 1,
+  },
+  retakeBtn: {
+    borderWidth: 1,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: radius.sm,
   },
 });

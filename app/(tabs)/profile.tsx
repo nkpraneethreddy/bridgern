@@ -9,7 +9,9 @@ import { deleteAccount, signOut } from '../../src/services/auth';
 import { useAuthStore } from '../../src/stores/authStore';
 import { ThemePreference, useThemeStore } from '../../src/stores/themeStore';
 import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
+import { useRetakeStore } from '../../src/stores/retakeStore';
 import { PaywallModal } from '../../src/components/ui/PaywallModal';
+import { CPRIntakeModal } from '../../src/components/ui/CPRIntakeModal';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { radius, spacing } from '../../src/theme/typography';
 
@@ -25,6 +27,7 @@ export default function ProfileScreen() {
   const { user, profile } = useAuthStore();
   const { preference, setPreference } = useThemeStore();
   const { status: subStatus, openPaywall } = useSubscriptionStore();
+  const { isRetakeModeActive, openModal: openRetakeModal } = useRetakeStore();
   const [busy, setBusy] = useState<'signout' | 'delete' | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -97,6 +100,22 @@ export default function ProfileScreen() {
           title="Edit Study Profile"
           variant="outline"
           onPress={() => router.push('/(onboarding)/profile-setup')}
+        />
+      </Card>
+
+      <Card style={styles.section}>
+        <ThemedText variant="h3">NCLEX Retake Mode</ThemedText>
+        <ThemedText variant="body">
+          {isRetakeModeActive ? 'Retake Mode: Active' : 'First-time or Retake Pathway'}
+        </ThemedText>
+        <ThemedText variant="caption" muted>
+          Input your Candidate Performance Report (CPR) from previous attempts to generate a
+          targeted remediation plan for below-passing Client Needs categories.
+        </ThemedText>
+        <Button
+          title={isRetakeModeActive ? 'Edit CPR Ratings' : 'Input Past CPR Results'}
+          variant="outline"
+          onPress={openRetakeModal}
         />
       </Card>
 
@@ -204,6 +223,7 @@ export default function ProfileScreen() {
       </View>
 
       <PaywallModal />
+      <CPRIntakeModal />
     </ScrollView>
   );
 }
