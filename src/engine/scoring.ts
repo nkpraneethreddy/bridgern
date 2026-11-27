@@ -3,7 +3,7 @@
  * No React Native or Supabase dependency — fully unit-testable.
  */
 
-import type { QuestionOption } from '../types/database';
+import type { QuestionOption, QuestionItemType } from '../types/database';
 import type { QuestionScoringRule } from '../types/database';
 import type {
   QuestionResponse,
@@ -376,9 +376,11 @@ export function scoreAnswer(
     case 'case_study': {
       // Case study delegates to the inner response type
       if (response.type !== 'case_study') break;
-      // Recursively score the inner step — the question's options
-      // are for the current step of the case
-      return scoreAnswer(question, response.inner);
+      const subType =
+        ((question.clinical_data as Record<string, unknown>)?.sub_type as QuestionItemType) ??
+        (response.inner.type as QuestionItemType);
+      const innerQuestion: QuestionWithOptions = { ...question, item_type: subType };
+      return scoreAnswer(innerQuestion, response.inner);
     }
 
     default:

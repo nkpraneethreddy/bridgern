@@ -743,6 +743,115 @@ const QUESTIONS: QDef[] = [
       { key: 'P4', label: 'Fasting blood glucose', isCorrect: false, metadata: { bowtie_zone: 'right' }, explanation: 'Blood glucose is not a priority parameter in anaphylaxis.' },
     ],
   },
+
+  // ═══ NGN Clinical Case Studies with Full EHR Charts ════════════════
+  {
+    category: CAT.ADAPT,
+    topic: 'Sepsis & Septic Shock Recognition',
+    itemType: 'case_study',
+    difficulty: 4,
+    cognitiveLevel: 'recognize_cues',
+    scoringRule: 'polytomous_plus_minus',
+    maxPoints: 4,
+    stem: 'The nurse reviews the Electronic Health Record (EHR). Which clinical findings indicate that the client is developing septic shock and require immediate intervention? Select all that apply.',
+    rationale:
+      'Lactic acid >4.0 mmol/L, mean arterial pressure (MAP) <65 mmHg (BP 84/52), tachypnea (RR 28), and tachycardia (HR 122) in the presence of suspected infection indicate septic shock with tissue hypoperfusion requiring immediate 30 mL/kg crystalloid resuscitation.',
+    clinicalData: {
+      sub_type: 'sata',
+      patient: {
+        name: 'Harold Vance',
+        age: 72,
+        gender: 'Male',
+        mrn: 'MRN-849201',
+        admissionDiagnosis: 'Community-Acquired Pneumonia / Sepsis',
+        allergies: 'Penicillin (Urticaria/Hives)',
+        codeStatus: 'Full Code',
+      },
+      nursesNotes: [
+        {
+          timestamp: '08:00',
+          note: '72-year-old male admitted from ED with productive cough, purulent sputum, and fever. Alert and oriented x 3. Crackles auscultated in right lower lung field. Peripheral pulses +2 bilaterally.',
+        },
+        {
+          timestamp: '09:30',
+          note: 'Client is now restless and confused to date. Skin is cool and clammy with delayed capillary refill (4 seconds). Client reports feeling dizzy when head of bed is elevated.',
+        },
+      ],
+      vitalSigns: [
+        { timestamp: '08:00', bp: '118/76', hr: 88, rr: 18, spo2: '96%', temp: '38.6°C' },
+        { timestamp: '09:30', bp: '84/52', hr: 122, rr: 28, spo2: '91%', temp: '39.1°C' },
+      ],
+      labs: [
+        { test: 'Serum Lactate', value: '4.2 mmol/L', referenceRange: '0.5 - 2.0 mmol/L', flag: 'CRITICAL' },
+        { test: 'White Blood Cell Count', value: '18,500 /mcL', referenceRange: '4,500 - 11,000 /mcL', flag: 'H' },
+        { test: 'Platelets', value: '135,000 /mcL', referenceRange: '150,000 - 450,000 /mcL', flag: 'L' },
+        { test: 'Serum Creatinine', value: '1.8 mg/dL', referenceRange: '0.7 - 1.3 mg/dL', flag: 'H' },
+      ],
+      orders: [
+        { timestamp: '09:35', order: 'Blood cultures x 2 sites before antibiotic administration', status: 'STAT' },
+        { timestamp: '09:35', order: '0.9% Normal Saline 30 mL/kg IV bolus over 60 minutes', status: 'STAT' },
+        { timestamp: '09:40', order: 'IV Levofloxacin 750 mg daily (Penicillin allergy noted)', status: 'Active' },
+      ],
+    },
+    options: [
+      { key: 'A', label: 'Blood pressure 84/52 mmHg (MAP <65 mmHg)', isCorrect: true, explanation: 'Hypotension refractory to initial volume indicates septic shock hypoperfusion.' },
+      { key: 'B', label: 'Serum lactate 4.2 mmol/L', isCorrect: true, explanation: 'Lactate >4.0 mmol/L reflects severe cellular hypoxia and anaerobic metabolism.' },
+      { key: 'C', label: 'Heart rate 122 beats/min', isCorrect: true, explanation: 'Tachycardia is a compensatory response to hypovolemia and distributive shock.' },
+      { key: 'D', label: 'New onset restlessness and confusion', isCorrect: true, explanation: 'Altered mental status is an ominous indicator of poor cerebral perfusion in sepsis.' },
+      { key: 'E', label: 'Pupils equal and reactive to light', isCorrect: false, explanation: 'PERRLA is an expected normal neurological finding.' },
+      { key: 'F', label: 'Productive cough with purulent sputum', isCorrect: false, explanation: 'While confirming pneumonia source, it does not specifically indicate hemodynamic shock.' },
+    ],
+  },
+  {
+    category: CAT.RISK,
+    topic: 'Acute Pulmonary Edema Prioritization',
+    itemType: 'case_study',
+    difficulty: 3,
+    cognitiveLevel: 'prioritize_hypotheses',
+    scoringRule: 'dichotomous',
+    maxPoints: 1,
+    stem: 'The nurse examines the client chart. Which prescription should the nurse implement first?',
+    rationale:
+      'Airway and breathing take highest priority (ABC hierarchy). Oxygen 4 L via nasal cannula must be initiated first to relieve severe hypoxemia (SpO2 88% on room air) and dyspnea before administering IV diuretics or placing an indwelling catheter.',
+    clinicalData: {
+      sub_type: 'multiple_choice',
+      patient: {
+        name: 'Eleanor Chen',
+        age: 68,
+        gender: 'Female',
+        mrn: 'MRN-391084',
+        admissionDiagnosis: 'Heart Failure Exacerbation / Acute Pulmonary Edema',
+        allergies: 'Sulfa Drugs (Rash)',
+        codeStatus: 'Full Code',
+      },
+      nursesNotes: [
+        {
+          timestamp: '07:00',
+          note: '68-year-old female presents with severe dyspnea, orthopnea requiring 3 pillows, and dry non-productive cough. Coarse crackles auscultated bilaterally up to mid-scapula. Jugular venous distention visible at 45 degrees.',
+        },
+      ],
+      vitalSigns: [
+        { timestamp: '07:05', bp: '168/96', hr: 104, rr: 26, spo2: '88%', temp: '36.9°C' },
+      ],
+      labs: [
+        { test: 'B-type Natriuretic Peptide (BNP)', value: '1,450 pg/mL', referenceRange: '<100 pg/mL', flag: 'H' },
+        { test: 'Potassium', value: '4.1 mEq/L', referenceRange: '3.5 - 5.0 mEq/L' },
+        { test: 'Blood Urea Nitrogen (BUN)', value: '28 mg/dL', referenceRange: '10 - 20 mg/dL', flag: 'H' },
+      ],
+      orders: [
+        { timestamp: '07:10', order: 'Oxygen at 4 L/min via nasal cannula to titrate SpO2 >=92%', status: 'STAT' },
+        { timestamp: '07:10', order: 'Furosemide 40 mg IV push over 2 minutes', status: 'STAT' },
+        { timestamp: '07:10', order: 'Insert indwelling urinary catheter to gravity for strict output', status: 'Active' },
+        { timestamp: '07:10', order: 'Draw 12-lead ECG stat', status: 'Active' },
+      ],
+    },
+    options: [
+      { key: 'A', label: 'Administer Oxygen at 4 L/min via nasal cannula', isCorrect: true, explanation: 'Hypoxemia (SpO2 88%) is life-threatening; oxygen is the immediate ABC priority.' },
+      { key: 'B', label: 'Administer Furosemide 40 mg IV push', isCorrect: false, explanation: 'Diuresis is critical for preload reduction but oxygenation must be addressed first.' },
+      { key: 'C', label: 'Insert an indwelling urinary catheter', isCorrect: false, explanation: 'Urine output monitoring is secondary to resolving acute respiratory distress.' },
+      { key: 'D', label: 'Obtain a 12-lead electrocardiogram (ECG)', isCorrect: false, explanation: 'ECG is an important diagnostic order but does not stabilize immediate hypoxemia.' },
+    ],
+  },
 ];
 
 export function createPlaceholderPool(): QuestionWithOptions[] {

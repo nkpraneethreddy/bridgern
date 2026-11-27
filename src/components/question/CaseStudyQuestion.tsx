@@ -1,24 +1,28 @@
 /**
  * Case study question renderer — multi-step clinical scenario.
  *
- * Shows clinical background, then renders each step using the
- * appropriate question type. Steps are shown one at a time.
- *
- * Psychology: Narrative transport — the clinical scenario creates
- * immersion, making the learning more memorable than isolated questions.
- * Progressive disclosure reduces cognitive load by revealing one step
- * at a time.
+ * Implements the authentic Next Generation NCLEX (NGN) Clinical Judgment
+ * Measurement Model (CJMM) interface:
+ * 1. Interactive Electronic Health Record (EHR) Patient Chart (EHRChartViewer)
+ * 2. 6-Step CJMM Step Badge (Recognize Cues -> Analyze Cues -> Prioritize Hypotheses ->
+ *    Generate Solutions -> Take Action -> Evaluate Outcomes)
+ * 3. Interactive response interface matching the step's specific question type
+ *    (Multiple Choice, SATA, Matrix) with NO recursive loop.
  */
 
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeProvider';
-import { spacing } from '../../theme/typography';
+import { radius, spacing } from '../../theme/typography';
 import { ThemedText } from '../ui/ThemedText';
 import { Card } from '../ui/Card';
-import { QuestionRenderer } from './QuestionRenderer';
+import { EHRChartData, EHRChartViewer } from './EHRChartViewer';
+import { MCQuestion } from './MCQuestion';
+import { SATAQuestion } from './SATAQuestion';
+import { MatrixQuestion } from './MatrixQuestion';
 import type { QuestionWithOptions, QuestionResponse, ScoreResult } from '../../engine/types';
+import type { QuestionItemType } from '../../types/database';
 
 interface Props {
   question: QuestionWithOptions;
@@ -27,64 +31,114 @@ interface Props {
   disabled: boolean;
 }
 
+const CJMM_STEPS: Record<number, { title: string; desc: string }> = {
+  1: { title: 'Step 1: Recognize Cues', desc: 'Identify relevant and urgent clinical findings' },
+  2: { title: 'Step 2: Analyze Cues', desc: 'Connect findings to client pathophysiology' },
+  3: { title: 'Step 3: Prioritize Hypotheses', desc: 'Identify the priority client condition or risk' },
+  4: { title: 'Step 4: Generate Solutions', desc: 'Establish clinical interventions and goals' },
+  5: { title: 'Step 5: Take Action', desc: 'Implement nursing orders and interventions' },
+  6: { title: 'Step 6: Evaluate Outcomes', desc: 'Assess client response to clinical actions' },
+};
+
 export function CaseStudyQuestion({ question, onSubmit, feedback, disabled }: Props) {
   const { colors } = useTheme();
 
-  const clinicalData = question.clinical_data as Record<string, unknown>;
-  const scenario = (clinicalData?.scenario as string) ?? '';
-  const stepLabel = question.case_study_step
-    ? `Step ${question.case_study_step}`
-    : 'Clinical scenario';
+  const clinicalData = (question.clinical_data as unknown as EHRChartData & { sub_type?: QuestionItemType }) ?? {};
+  const stepNum = question.case_study_step ?? 1;
+  const cjmm = CJMM_STEPS[stepNum] ?? {
+    title: `Step ${stepNum}: Clinical Judgment`,
+    desc: 'Analyze clinical cues to form nursing decisions',
+  };
 
-  const handleStepSubmit = (innerResponse: QuestionResponse) => {
+  // Determine sub question type (MC, SATA, Matrix)
+  const subType: QuestionItemType =
+    clinicalData.sub_type ??
+    (question.options.filter((o) => o.is_correct).length > 1 ? 'sata' : 'multiple_choice');
+
+  const handleInnerSubmit = (innerResponse: QuestionResponse) => {
     onSubmit({
       type: 'case_study',
-      step: question.case_study_step ?? 1,
+      step: stepNum,
       inner: innerResponse,
     });
   };
 
   return (
     <View style={styles.container}>
-      {/* Clinical scenario card */}
-      <Card elevated style={styles.scenarioCard}>
-        <View style={styles.stepHeader}>
-          <Ionicons name="document-text-outline" size={16} color={colors.primary} />
-          <ThemedText variant="label" tone="primary">
-            {stepLabel}
+      {/* CJMM Clinical Judgment Step Badge */}
+      <View
+        style={[
+          styles.cjmmCard,
+          { backgroundColor: colors.primarySoft, borderColor: colors.primary },
+        ]}
+      >
+        <View style={styles.cjmmTop}>
+          <Ionicons name="git-network-outline" size={16} color={colors.primary} />
+          <ThemedText variant="label" tone="primary" style={styles.cjmmTitle}>
+            {cjmm.title}
           </ThemedText>
         </View>
-        {scenario ? (
-          <ThemedText variant="body" style={styles.scenario}>
-            {scenario}
-          </ThemedText>
-        ) : null}
-      </Card>
+        <ThemedText variant="caption" muted style={styles.cjmmDesc}>
+          {cjmm.desc}
+        </ThemedText>
+      </View>
 
-      {/* The actual question (could be MC, SATA, matrix, etc.) */}
-      <QuestionRenderer
-        question={question}
-        onSubmit={handleStepSubmit}
-        feedback={feedback}
-        disabled={disabled}
-      />
+      {/* Interactive Electronic Health Record (EHR) Chart */}
+      <EHRChartViewer data={clinicalData} />
+
+      {/* Interactive Sub-Question Component */}
+      <Card style={styles.questionCard}>
+        {subType === 'sata' ? (
+          <SATAQuestion
+            question={{ ...question, item_type: 'sata' }}
+            onSubmit={handleInnerSubmit}
+            feedback={feedback}
+            disabled={disabled}
+          />
+        ) : subType === 'matrix' ? (
+          <MatrixQuestion
+            question={{ ...question, item_type: 'matrix' }}
+            onSubmit={handleInnerSubmit}
+            feedback={feedback}
+            disabled={disabled}
+          />
+        ) : (
+          <MCQuestion
+            question={{ ...question, item_type: 'multiple_choice' }}
+            onSubmit={handleInnerSubmit}
+            feedback={feedback}
+            disabled={disabled}
+          />
+        )}
+      </Card>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    gap: spacing.md,
-  },
-  scenarioCard: {
     gap: spacing.sm,
   },
-  stepHeader: {
+  cjmmCard: {
+    padding: spacing.sm,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    gap: 2,
+  },
+  cjmmTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: 6,
   },
-  scenario: {
-    lineHeight: 24,
+  cjmmTitle: {
+    fontWeight: '700',
+  },
+  cjmmDesc: {
+    fontSize: 11,
+    paddingLeft: 22,
+  },
+  questionCard: {
+    padding: spacing.md,
+    gap: spacing.md,
   },
 });
