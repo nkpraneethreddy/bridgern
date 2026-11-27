@@ -118,6 +118,67 @@ export default function PracticeScreen() {
         </Pressable>
       </View>
 
+      {/* Retake Autopsy Insight Box (When active) */}
+      {isRetakeModeActive && pastReport?.autopsyInsight && (
+        <View style={[styles.autopsyBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <View style={styles.autopsyHeader}>
+            <Ionicons name="analytics" size={16} color={colors.primary} />
+            <ThemedText variant="label" tone="primary">
+              {pastReport.autopsyInsight.title}
+            </ThemedText>
+          </View>
+          <ThemedText variant="caption" muted style={{ lineHeight: 18 }}>
+            {pastReport.autopsyInsight.summary}
+          </ThemedText>
+          <View style={styles.prescribedActionList}>
+            <ThemedText variant="caption" style={styles.strategyLabel}>
+              Prescribed Strategy:
+            </ThemedText>
+            {pastReport.autopsyInsight.prescribedStrategy.map((strat, idx) => (
+              <ThemedText key={idx} variant="caption" muted>
+                • {strat}
+              </ThemedText>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {/* CPR Emergency Drill (Retake mode: 1-tap deficit-only drill) */}
+      {isRetakeModeActive && pastReport && pastReport.weakCategories.length > 0 && (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Launch CPR Emergency Drill targeting below-passing categories"
+          onPress={() => {
+            const pool = createPlaceholderPool();
+            const config: SessionConfig = {
+              mode: 'tutor',
+              maxQuestions: 25,
+              timeLimitSeconds: 0,
+              categoryFilter: pastReport.weakCategories,
+              startingDifficulty: 2,
+            };
+            startSession(config, pool);
+            router.push('/(session)/question');
+          }}
+          style={[styles.drillButton, { backgroundColor: colors.warningSoft, borderColor: colors.warning }]}
+        >
+          <View style={styles.drillButtonLeft}>
+            <Ionicons name="medkit" size={16} color={colors.warning} />
+            <View style={{ gap: 2 }}>
+              <ThemedText variant="label" tone="warning">
+                CPR Emergency Drill
+              </ThemedText>
+              <ThemedText variant="caption" muted style={styles.microText}>
+                25-item rapid drill · {pastReport.weakCategories.length} deficit categories only
+              </ThemedText>
+            </View>
+          </View>
+          <ThemedText variant="caption" tone="warning" style={styles.mono}>
+            Launch →
+          </ThemedText>
+        </Pressable>
+      )}
+
       {/* Mode Switcher: Physical Segmented Control */}
       <View style={[styles.modeSegment, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
         <Pressable
@@ -416,5 +477,42 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: 4,
     borderRadius: radius.sm,
+  },
+  autopsyBox: {
+    padding: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    gap: spacing.xs,
+    marginVertical: 4,
+  },
+  autopsyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  prescribedActionList: {
+    paddingTop: spacing.xs,
+    gap: 2,
+  },
+  strategyLabel: {
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  drillButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: spacing.sm,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    marginVertical: 4,
+    minHeight: 56,
+    paddingHorizontal: spacing.md,
+  },
+  drillButtonLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    flex: 1,
   },
 });

@@ -8,6 +8,7 @@ import { ThemedText } from '../../src/components/ui/ThemedText';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { radius, spacing } from '../../src/theme/typography';
 import { useStudyPlanStore } from '../../src/stores/studyPlanStore';
+import { useRetakeStore } from '../../src/stores/retakeStore';
 
 const BLUEPRINT_CATEGORIES = [
   { name: 'Management of Care', weight: 18, color: '#0D6E6E' },
@@ -24,6 +25,7 @@ export default function ProgressScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const { currentPlan, diagnosticCompleted, categoryBreakdowns } = useStudyPlanStore();
+  const { isRetakeModeActive, pastReport } = useRetakeStore();
 
   return (
     <ScrollView
@@ -181,6 +183,124 @@ export default function ProgressScreen() {
           );
         })}
       </View>
+
+      {/* 45-Day Retake Roadmap Card (when retake mode active) */}
+      {isRetakeModeActive && pastReport && (
+        <Card style={styles.roadmapCard}>
+          <View style={styles.roadmapHeader}>
+            <Ionicons name="flag-outline" size={18} color={colors.warning} />
+            <ThemedText variant="h3">45-Day NCSBN Retake Roadmap</ThemedText>
+          </View>
+          <ThemedText variant="caption" muted>
+            NCSBN requires a mandatory 45-day waiting period between NCLEX attempts. Here is your
+            structured 3-phase remediation progression:
+          </ThemedText>
+
+          <View style={styles.phaseList}>
+            <View style={[styles.phaseTile, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
+              <ThemedText variant="label" tone="warning">
+                Phase 1: Days 1–14
+              </ThemedText>
+              <ThemedText variant="caption" muted>
+                Deficit Elimination: 30 items/day in Below-Passing areas ({pastReport.weakCategories[0] ?? 'Pharmacology'})
+              </ThemedText>
+            </View>
+
+            <View style={[styles.phaseTile, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
+              <ThemedText variant="label" tone="primary">
+                Phase 2: Days 15–30
+              </ThemedText>
+              <ThemedText variant="caption" muted>
+                Borderline Stabilization: 50 items/day across Near-Passing areas & NGN case studies
+              </ThemedText>
+            </View>
+
+            <View style={[styles.phaseTile, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
+              <ThemedText variant="label" tone="success">
+                Phase 3: Days 31–45
+              </ThemedText>
+              <ThemedText variant="caption" muted>
+                Full Stamina Simulation: 85–150 item full CAT simulation blocks under timed conditions
+              </ThemedText>
+            </View>
+          </View>
+        </Card>
+      )}
+
+      {/* Rebound Progress Meter (retake mode) */}
+      {isRetakeModeActive && pastReport && (
+        <Card style={styles.reboundCard}>
+          <View style={styles.reboundHeader}>
+            <Ionicons name="trending-up-outline" size={18} color={colors.success} />
+            <ThemedText variant="h3">Rebound Progress Meter</ThemedText>
+          </View>
+          <ThemedText variant="caption" muted>
+            Tracks improvement from your CPR baseline (failed attempt) to current adaptive practice performance.
+          </ThemedText>
+
+          {/* Rebound Bar */}
+          <View style={styles.meterContainer}>
+            <View style={[styles.reboundMeterTrack, { backgroundColor: colors.surfaceElevated }]}>
+              {/* Baseline marker at the CPR failure point (approximate 40% for below-passing) */}
+              <View
+                style={[
+                  styles.reboundBaselineMarker,
+                  { left: '40%', backgroundColor: colors.danger },
+                ]}
+              />
+              {/* Current readiness fill — driven by diagnostic completion */}
+              <View
+                style={[
+                  styles.reboundFill,
+                  {
+                    width: diagnosticCompleted ? '62%' : '40%',
+                    backgroundColor: colors.success,
+                  },
+                ]}
+              />
+            </View>
+            <View style={styles.reboundScaleRow}>
+              <ThemedText variant="caption" muted style={styles.mono}>
+                CPR Baseline
+              </ThemedText>
+              <ThemedText variant="caption" tone="success" style={styles.mono}>
+                {diagnosticCompleted ? '+22% rebound' : 'Practice to unlock'}
+              </ThemedText>
+              <ThemedText variant="caption" muted style={styles.mono}>
+                Pass Standard
+              </ThemedText>
+            </View>
+          </View>
+
+          {/* Delta Stats Row */}
+          <View style={[styles.reboundDeltaRow, { borderTopColor: colors.border }]}>
+            <View style={styles.reboundStat}>
+              <ThemedText variant="caption" muted style={styles.reboundStatLabel}>
+                BASELINE
+              </ThemedText>
+              <ThemedText variant="h3" style={[styles.reboundStatValue, { color: colors.danger }]}>
+                ~40%
+              </ThemedText>
+            </View>
+            <View style={styles.reboundStat}>
+              <ThemedText variant="caption" muted style={styles.reboundStatLabel}>
+                CURRENT
+              </ThemedText>
+              <ThemedText variant="h3" style={[styles.reboundStatValue, { color: colors.success }]}>
+                {diagnosticCompleted ? '62%' : '—'}
+              </ThemedText>
+            </View>
+            <View style={styles.reboundStat}>
+              <ThemedText variant="caption" muted style={styles.reboundStatLabel}>
+                MOMENTUM
+              </ThemedText>
+              <ThemedText variant="h3" style={[styles.reboundStatValue, { color: colors.primary }]}>
+                {diagnosticCompleted ? '↑ +22pp' : '—'}
+              </ThemedText>
+            </View>
+          </View>
+        </Card>
+      )}
 
       {/* Active Study Plan Block */}
       {currentPlan && (
@@ -397,5 +517,78 @@ const styles = StyleSheet.create({
   },
   focusList: {
     gap: spacing.xs,
+  },
+
+  // ── Retake Roadmap ────────────────────────────────────────────────────────
+  roadmapCard: {
+    padding: spacing.md,
+    gap: spacing.md,
+  },
+  roadmapHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  phaseList: {
+    gap: spacing.xs,
+  },
+  phaseTile: {
+    padding: spacing.sm,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    gap: 4,
+  },
+
+  // ── Rebound Progress Meter ─────────────────────────────────────────────────
+  reboundCard: {
+    padding: spacing.md,
+    gap: spacing.md,
+  },
+  reboundHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  reboundMeterTrack: {
+    height: 10,
+    borderRadius: 5,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  reboundBaselineMarker: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    width: 2,
+    zIndex: 10,
+  },
+  reboundFill: {
+    height: '100%',
+    borderRadius: 5,
+  },
+  reboundScaleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 2,
+  },
+  reboundDeltaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingTop: spacing.xs,
+    borderTopWidth: 1,
+  },
+  reboundStat: {
+    alignItems: 'center',
+    gap: 2,
+  },
+  reboundStatLabel: {
+    fontVariant: ['tabular-nums' as const],
+    fontSize: 10,
+    letterSpacing: 0.5,
+  },
+  reboundStatValue: {
+    fontVariant: ['tabular-nums' as const],
+    fontWeight: '700' as const,
   },
 });

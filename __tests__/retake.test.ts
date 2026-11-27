@@ -33,6 +33,15 @@ describe('retakeStore', () => {
     expect(state.pastReport?.weakCategories).toContain('Basic Care & Comfort');
     expect(state.pastReport?.weakCategories).not.toContain('Management of Care');
 
+    // Autopsy insight should be generated
+    expect(state.pastReport?.autopsyInsight).toBeDefined();
+    expect(state.pastReport?.autopsyInsight.mechanism).toBe('minimum_length_deficit');
+    expect(state.pastReport?.autopsyInsight.prescribedStrategy.length).toBeGreaterThan(0);
+
+    // 45-Day roadmap should be generated
+    expect(state.pastReport?.roadmap).toBeDefined();
+    expect(state.pastReport?.roadmap.length).toBe(45);
+
     // Confirm study plan was recalibrated
     const plan = useStudyPlanStore.getState().currentPlan;
     expect(plan).toBeDefined();

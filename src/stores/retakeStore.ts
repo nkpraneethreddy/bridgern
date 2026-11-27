@@ -14,6 +14,7 @@
 import { create } from 'zustand';
 import { supabase, supabaseConfigured } from '../lib/supabase';
 import { useStudyPlanStore } from './studyPlanStore';
+import { AutopsyInsight, diagnoseShutOffMechanism, generate45DayRetakeRoadmap, RetakeRoadmapDay } from '../engine/retakeAutopsy';
 
 export type CPRRating = 'below_passing' | 'near_passing' | 'above_passing';
 
@@ -28,6 +29,8 @@ export interface PastExamReport {
   questionsStoppedAt: number; // 85, 150, etc.
   ratings: Record<string, CPRRating>;
   weakCategories: string[];
+  autopsyInsight: AutopsyInsight;
+  roadmap: RetakeRoadmapDay[];
   submittedAt: string;
 }
 
@@ -38,7 +41,7 @@ interface RetakeState {
 
   openModal: () => void;
   closeModal: () => void;
-  submitCPR: (report: Omit<PastExamReport, 'weakCategories' | 'submittedAt'>, userId?: string) => Promise<void>;
+  submitCPR: (report: Omit<PastExamReport, 'weakCategories' | 'autopsyInsight' | 'roadmap' | 'submittedAt'>, userId?: string) => Promise<void>;
   resetRetakeMode: () => void;
 }
 
@@ -67,9 +70,14 @@ export const useRetakeStore = create<RetakeState>((set, get) => ({
       .filter(([_, rating]) => rating === 'below_passing' || rating === 'near_passing')
       .map(([cat]) => cat);
 
+    const autopsyInsight = diagnoseShutOffMechanism(reportData.questionsStoppedAt);
+    const roadmap = generate45DayRetakeRoadmap(weakCategories, reportData.examDate);
+
     const fullReport: PastExamReport = {
       ...reportData,
       weakCategories,
+      autopsyInsight,
+      roadmap,
       submittedAt: new Date().toISOString(),
     };
 
